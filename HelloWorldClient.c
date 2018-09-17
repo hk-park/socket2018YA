@@ -11,6 +11,7 @@ int main(){
 	struct sockaddr_in c_addr;
 	int n;
 	char rcvBuffer[100];
+	char sendBuffer[100];
 	c_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&c_addr, 0, sizeof(c_addr));
@@ -23,6 +24,9 @@ int main(){
 		close(c_socket);
 		return -1;
 	}
+	//strcpy(sendBuffer, "Hi, I'm client\n");
+	fgets(sendBuffer, sizeof(sendBuffer), stdin);
+	write(c_socket, sendBuffer, strlen(sendBuffer));
 	n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 	if(n < 0){
 		printf("[ERR] Cannot read\n");

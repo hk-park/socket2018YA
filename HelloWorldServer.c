@@ -8,7 +8,7 @@
  
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 //char buffer[100] = "hello, world\n";
-char buffer[100] = "My name is Hongkyu.\n";
+char buffer[100] = "Hi, I'm server\n";
  
 main( )
 {
@@ -16,6 +16,8 @@ main( )
 	struct sockaddr_in s_addr, c_addr;
 	int   len;
 	int   n;
+	int rcvLen;
+	char rcvBuffer[100];
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -39,6 +41,9 @@ main( )
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
 		printf("Client is connected\n");
+		rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
+		rcvBuffer[rcvLen] = '\0';
+		printf("[%s] received\n", rcvBuffer);
 		n = strlen(buffer);
 		write(c_socket, buffer, n);
 		close(c_socket);
