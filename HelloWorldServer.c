@@ -45,12 +45,14 @@ main( )
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 			rcvBuffer[rcvLen] = '\0';
 			printf("[%s] received\n", rcvBuffer);
-			if(strncasecmp(rcvBuffer, "quit", 4) == 0)
+			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
 			n = strlen(buffer);
 			write(c_socket, buffer, n);
 		}
 		close(c_socket);
+		if(!strncasecmp(rcvBuffer, "kill server", 11))
+			break;
 	}	
 	close(s_socket);
 }

@@ -29,7 +29,7 @@ int main(){
 		fgets(sendBuffer, sizeof(sendBuffer), stdin);
 		sendBuffer[strlen(sendBuffer)-1] = '\0';
 		write(c_socket, sendBuffer, strlen(sendBuffer));
-		if(strncasecmp(sendBuffer, "quit", 4) == 0)
+		if(strncasecmp(sendBuffer, "quit", 4) == 0 || strncasecmp(sendBuffer, "kill server", 11) == 0)
 			break;
 		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 		if(n < 0){
