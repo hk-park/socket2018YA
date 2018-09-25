@@ -41,11 +41,15 @@ main( )
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
 		printf("Client is connected\n");
-		rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
-		rcvBuffer[rcvLen] = '\0';
-		printf("[%s] received\n", rcvBuffer);
-		n = strlen(buffer);
-		write(c_socket, buffer, n);
+		while(1){
+			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
+			rcvBuffer[rcvLen] = '\0';
+			printf("[%s] received\n", rcvBuffer);
+			if(strncasecmp(rcvBuffer, "quit", 4) == 0)
+				break;
+			n = strlen(buffer);
+			write(c_socket, buffer, n);
+		}
 		close(c_socket);
 	}	
 	close(s_socket);

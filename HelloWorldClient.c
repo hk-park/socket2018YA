@@ -25,18 +25,22 @@ int main(){
 		return -1;
 	}
 	//strcpy(sendBuffer, "Hi, I'm client\n");
-	fgets(sendBuffer, sizeof(sendBuffer), stdin);
-	sendBuffer[strlen(sendBuffer)-1] = '\0';
-	write(c_socket, sendBuffer, strlen(sendBuffer));
-	n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
-	if(n < 0){
-		printf("[ERR] Cannot read\n");
-		return -1;
-	}
-	rcvBuffer[n] = '\0';
-	printf("received Data: %s\n", rcvBuffer);
-	// 3-2. 서버로부터 받은 문자열 길이 출력
-	printf("received data length: %d\n", n);	
+	while(1){
+		fgets(sendBuffer, sizeof(sendBuffer), stdin);
+		sendBuffer[strlen(sendBuffer)-1] = '\0';
+		write(c_socket, sendBuffer, strlen(sendBuffer));
+		if(strncasecmp(sendBuffer, "quit", 4) == 0)
+			break;
+		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
+		if(n < 0){
+			printf("[ERR] Cannot read\n");
+			return -1;
+		}
+		rcvBuffer[n] = '\0';
+		printf("received Data: %s\n", rcvBuffer);
+		// 3-2. 서버로부터 받은 문자열 길이 출력
+		printf("received data length: %d\n", n);
+	}	
 	close(c_socket);
 	return 0;
 
