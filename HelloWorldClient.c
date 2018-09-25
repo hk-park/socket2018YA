@@ -26,6 +26,7 @@ int main(){
 	}
 	//strcpy(sendBuffer, "Hi, I'm client\n");
 	fgets(sendBuffer, sizeof(sendBuffer), stdin);
+	sendBuffer[strlen(sendBuffer)-1] = '\0';
 	write(c_socket, sendBuffer, strlen(sendBuffer));
 	n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 	if(n < 0){
