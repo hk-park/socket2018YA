@@ -5,9 +5,9 @@
 >> 3. 학생은 각자의 이름으로 브랜치를 생성하고, 자신의 브랜치에서만 작업한다. 
 * * *
 ### 1. github.com에 회원 가입 후 로그인 수행
-### 2. socket2018YB 소스코드 다운로드 (git clone https://github.com/hk-park/socket2018YB.git )
-> 1) 다운로드가 완료되면, socket2018YB 디렉토리가 생성. 
-> 2) socket2018YB로 이동
+### 2. socket2018YA 소스코드 다운로드 (git clone https://github.com/hk-park/socket2018YA.git )
+> 1) 다운로드가 완료되면, socket2018YA 디렉토리가 생성. 
+> 2) socket2018YA로 이동
 * * *
 ### 3. 자신의 소스코드 관리를 위한 브랜치 생성 (최초 한 번만 수행)
 > 1) **git branch "자신의이름"** (예를 들어, git branch 홍길동)
@@ -29,8 +29,8 @@
 * * *
 ### 4. 매주 실습 내용 업데이트 방법 (매주 수업 끝나고 수행)
 > 1) **[수업 전] 실습 환경 세팅**
->> * socket2018YB 소스코드 다운로드 (git clone https://github.com/hk-park/socket2018YB.git)
->> * socket2018YB 디렉토리로 이동
+>> * socket2018YA 소스코드 다운로드 (git clone https://github.com/hk-park/socket2018YA.git)
+>> * socket2018YA 디렉토리로 이동
 >> * git checkout -b "자신의이름" origin/"자신의이름" (예를 들어, git checkout -b 홍길동 origin/홍길동)
 >>> - 여기까지 하면, 지난 주에 자신이 업로드했던 소스코드를 볼 수 있다.
 >>> - git branch 명령어를 수행하여, 자신의이름으로 된 브랜치명 옆에 * 표시가 있고, 녹색 글씨로 표기가 되어 있는지 꼭 확인!
