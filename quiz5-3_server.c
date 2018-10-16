@@ -51,30 +51,39 @@ main( )
 			printf("[%s] received\n", rcvBuffer);
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
-			if(strncmp(rcvBuffer, "안녕하세요", 15) == 0){
-				printf("안녕하세요. 만나서 반가워요.\n");
-			}
-			if(strncmp(rcvBuffer, "이름이 머야?", 17) == 0){
-				printf("내 이름은 이호은이야.\n");
-			}
-			if(strncmp(rcvBuffer, "몇 살이야?", 16) == 0){
-				printf("나는 21살이야.\n");
-			}
-			if(strncmp(rcvBuffer, "strlen", 6) == 0){
-				printf("문자열 길이는 % d 입니다\n", strlen(rcvBuffer)-7);	
-			}
-			if(strncmp(rcvBuffer, "strcmp", 6) == 0){
+			else if(strncmp(rcvBuffer, "안녕하세요.", 16) == 0){
+                                strcpy(buffer, "안녕하세요. 만나서 반갑습니다.\n");
+                                write(c_socket, buffer, strlen(buffer));
+                        }
+                        else if(strncmp(rcvBuffer, "이름이 머야?", 17) == 0){
+                                strcpy(buffer, "내 이름은 이호은 이야\n");
+                                write(c_socket, buffer, strlen(buffer));
+                        }
+                        else if(strncmp(rcvBuffer, "몇 살이야?", 16) == 0){
+                                strcpy(buffer, "내 나이는 21살 이야\n");
+                                write(c_socket, buffer, strlen(buffer));
+                        }
+                        else if(strncmp(rcvBuffer, "strlen ", 7) == 0){
+				sprintf(rcvBuffer, "%d", strlen(rcvBuffer)-7);
+                                strcpy(buffer, rcvBuffer);
+                                write(c_socket, buffer, strlen(buffer));
+                        }
+                        else if(strncmp(rcvBuffer, "strcmp", 6) == 0) {
 				token = strtok(rcvBuffer, sep);
 				i=0;
 				while(token){
 					strcpy(str[i], token);
-					token=strtok(NULL, sep);
+					token = strtok(NULL, sep);
 					i++;
 				}
-				printf("%d\n",strcmp(str[1], str[2]));
-			}	
-			n = strlen(buffer);
-			write(c_socket, buffer, n);
+				sprintf(rcvBuffer, "%d", strcmp(str[1], str[2]));
+				write(c_socket, rcvBuffer, strlen(rcvBuffer));
+			}
+                        else{
+                                strcpy(buffer, rcvBuffer);
+                                n = strlen(buffer);
+                                write(c_socket, buffer, n);
+                        }
 		}
 		close(c_socket);
 		if(!strncasecmp(rcvBuffer, "kill server", 11))
