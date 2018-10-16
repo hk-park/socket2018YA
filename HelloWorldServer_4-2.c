@@ -5,13 +5,14 @@
 
 #define PORT 9000
 
-char buffer[100] = "Hello, World!";
+char sendBuffer[100];
+char rcvBuffer[100];
 
 int main(){
     int c_socket, s_socket;
     struct sockaddr_in s_addr, c_addr;
     int len;
-    int n;
+    int n,rcvLen;
 
     s_socket = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -33,9 +34,17 @@ int main(){
     while(1){
 			len = sizeof(c_addr);
 			c_socket = accept(s_socket, (struct sockaddr *)&c_addr, &len);
-
-			n = strlen(buffer);
-			write(c_socket, buffer, n);
+			printf("Clinet is connected\n");
+			
+			while(1){
+				rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
+				rcvBuffer[rcvLen] = '\0';
+				printf("%s",rcvBuffer);
+				if(strncasecmp(rcvBuffer, "quit", 4) == 0)
+					break;
+				strcpy(sendBuffer, "Hi, I'm server\n");
+				write(c_socket, sendBuffer, strlen(sendBuffer));
+			}
 
 			close(c_socket);
 		}

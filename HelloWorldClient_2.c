@@ -12,7 +12,7 @@ int main(){
 	char rcvBuffer[100]; // 서버에서 보내준 문자열을 저장하기 위한 변수
 	int n;
 	c_socket = socket(PF_INET, SOCK_STREAM, 0);
-	 
+
 	memset(&c_addr, 0, sizeof(c_addr));
 	c_addr.sin_addr.s_addr = inet_addr(IPADDR);
 	c_addr.sin_family = AF_INET;
@@ -27,6 +27,7 @@ int main(){
 	n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 	rcvBuffer[n] = '\0';
 	printf("[%s] is received\n",rcvBuffer);
+	printf("length :%d\n",strlen(rcvBuffer));
 
 	close(c_socket);
 	return 0;
