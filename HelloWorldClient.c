@@ -24,22 +24,21 @@ int main(){
 		close(c_socket);
 		return -1;
 	}
-	//strcpy(sendBuffer, "Hi, I'm client\n");
 	while(1){
 		fgets(sendBuffer, sizeof(sendBuffer), stdin);
-		sendBuffer[strlen(sendBuffer)-1] = '\0';
-		write(c_socket, sendBuffer, strlen(sendBuffer));
-		if(strncasecmp(sendBuffer, "quit", 4) == 0 || strncasecmp(sendBuffer, "kill server", 11) == 0)
+		//sendBuffer[strlen(sendBuffer)-1] = '\0'; // 자기가 보내는 문자의 마지막을 \0 처리하는 것이지만 안하는게 좋음.
+		write(c_socket, sendBuffer, strlen(sendBuffer)); // 서버로 문자열을 보냄
+		if(strncasecmp(sendBuffer, "quit", 4) == 0 
+			|| strncasecmp(sendBuffer, "kill", 4) == 0)
 			break;
-		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
+		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer)); // 서버에서 문자열을 받음
 		if(n < 0){
 			printf("[ERR] Cannot read\n");
 			return -1;
 		}
-		rcvBuffer[n] = '\0';
-		printf("received Data: %s\n", rcvBuffer);
-		// 3-2. 서버로부터 받은 문자열 길이 출력
-		printf("received data length: %d\n", n);
+		if(rcvBuffer[n] = '\n') //받은 문자열에 대해 개행문자 처리
+			rcvBuffer[n] = '\0';
+		printf("received Data[%d byte]: %s\n", n, rcvBuffer); 
 	}	
 	close(c_socket);
 	return 0;
