@@ -10,8 +10,8 @@ int main(){
 	int c_socket;
 	struct sockaddr_in c_addr;
 	int n;
-	char rcvBuffer[100];
-	char sendBuffer[100];
+	char rcvBuffer[BUFSIZ];
+	char sendBuffer[BUFSIZ];
 	c_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&c_addr, 0, sizeof(c_addr));
@@ -24,23 +24,21 @@ int main(){
 		close(c_socket);
 		return -1;
 	}
-	//strcpy(sendBuffer, "Hi, I'm client\n");
+	
 	while(1){
 		fgets(sendBuffer, sizeof(sendBuffer), stdin);
 		sendBuffer[strlen(sendBuffer)-1] = '\0';
-
 		write(c_socket, sendBuffer, strlen(sendBuffer));
-
+	
 		if(strncasecmp(sendBuffer, "quit", 4) == 0 || strncasecmp(sendBuffer, "kill server", 11) == 0)
 			break;
-
+		
 		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 		rcvBuffer[n] = '\0';
 		printf("received Data: %s\n", rcvBuffer);
-
-		// 3-2. 서버로부터 받은 문자열 길이 출력
 		printf("received data length: %d\n", n);
-	}	
+	}
+
 	close(c_socket);
 	return 0;
 
