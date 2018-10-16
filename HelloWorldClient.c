@@ -6,7 +6,7 @@
 #define PORT 9000
 #define IPADDR "127.0.0.1"
 
-int main(){
+main(){
 	int c_socket;
 	struct sockaddr_in c_addr;
 	int n;
@@ -20,11 +20,10 @@ int main(){
 	c_addr.sin_port = htons(PORT);
 	
 	if(connect(c_socket, (struct sockaddr *) &c_addr, sizeof(c_addr)) == -1){
-		printf("[ERR] Cannot connect\n");
+		printf("[ERR] Cannot connect.\n");
 		close(c_socket);
 		return -1;
 	}
-	//strcpy(sendBuffer, "Hi, I'm client\n");
 	while(1){
 		fgets(sendBuffer, sizeof(sendBuffer), stdin);
 		sendBuffer[strlen(sendBuffer)-1] = '\0';
@@ -33,15 +32,12 @@ int main(){
 			break;
 		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 		if(n < 0){
-			printf("[ERR] Cannot read\n");
+			printf("[ERR] Cannot read.\n");
 			return -1;
 		}
 		rcvBuffer[n] = '\0';
-		printf("received Data: %s\n", rcvBuffer);
-		// 3-2. 서버로부터 받은 문자열 길이 출력
-		printf("received data length: %d\n", n);
+		printf("Server >>> %s\n", rcvBuffer);
 	}	
 	close(c_socket);
-	return 0;
-
 }
+
