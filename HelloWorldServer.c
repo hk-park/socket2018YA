@@ -15,6 +15,7 @@ main()
 	char sendBuffer[100];
 	char cmp1[100];
 	char cmp2[100];
+	int cmpResult;
 	char *cmpPtr;
 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -44,21 +45,26 @@ main()
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 			if (rcvBuffer[rcvLen - 1] = '\n')
 				rcvBuffer[rcvLen - 1] = '\0';
-			printf("Data from client[%d byte]: %s\n", rcvLen, rcvBuffer);
+			printf("클라이언트에서 받은 데이터[%d byte]: %s\n", rcvLen, rcvBuffer);
 			// 길이와 받은 스트링을 출력한다.
 
+			// 서버 종료 기능
 			if ((strncasecmp(rcvBuffer, "quit", 4) == 0) 
 			|| (strncasecmp(rcvBuffer, "kill", 4) == 0))
 				break;
+			
+			// 채팅용 기능
 			else if ((strcasecmp(rcvBuffer, "hi") == 0) 
 			|| (strcmp(rcvBuffer, "안녕") == 0))
-				strcpy(sendBuffer, "Hello, This is Server.\n");
+				strcpy(sendBuffer, "Hello, Nice meet you.\n");
 			else if ((strncasecmp(rcvBuffer, "How old are you", 15) == 0) 
 			|| (strcmp(rcvBuffer, "몇살이니") == 0))
 				strcpy(sendBuffer, "I am 3 days old.\n");
 			else if ((strncasecmp(rcvBuffer, "What is your name", 17) == 0) 
 			|| (strcmp(rcvBuffer, "이름이 뭐니") == 0))
 				strcpy(sendBuffer, "I am HelloWorldServer.c!\n");
+
+			// 함수 반환 기능
 			else if (strncasecmp(rcvBuffer, "strlen", 6) == 0) { 
 				// strlen 길이를 반환해준다
 				sendBuffer[0] = '\0';
@@ -67,15 +73,20 @@ main()
 			}
 			else if (strncasecmp(rcvBuffer, "strcmp", 6) == 0) { 
 				// strcmp 문자열 두개가 동일시 참, 아니면 거짓 반환
-				//ptr = strtok(rcvBuffer, " ");
-				//ptr = strtok(NULL, " ");
-				//strcpy(cmp1, ptr);
-				//ptr = strtok(NULL, " ");
-				//strcpy(cmp2, ptr);
-				//sprintf(sendBuffer, "I have %s / %s\n", cmp1, cmp2);
+				cmpPtr = strtok(rcvBuffer, " ");
+				cmpPtr = strtok(NULL, " ");
+				strcpy(cmp1, cmpPtr);
+				cmpPtr = strtok(NULL, " ");
+				strcpy(cmp2, cmpPtr);
+				if(strcmp(cmp1, cmp2) == 0)
+					cmpResult = 0;
+				else
+					cmpResult = 1;
+				
+				sprintf(sendBuffer, "[%s]와 [%s]의 strcmp 결과값은 %d\n", cmp1, cmp2, cmpResult);
 			}
 			else
-				sprintf(sendBuffer, "%s는 올바른 명령어가 아닙니다.", rcvBuffer);
+				sprintf(sendBuffer, "%s는 올바른 명령어가 아닙니다.\n", rcvBuffer);
 
 
 			// 스트링을 클라이언트로 보냄

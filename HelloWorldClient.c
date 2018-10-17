@@ -38,7 +38,7 @@ int main(){
 		}
 		if(rcvBuffer[n-1] = '\n') //받은 문자열에 대해 개행문자 처리
 			rcvBuffer[n-1] = '\0';
-		printf("received Data[%d byte]: %s\n", n, rcvBuffer); 
+		printf("서버에서 받음[%d byte]: %s\n", n, rcvBuffer); 
 	}	
 	close(c_socket);
 	return 0;
