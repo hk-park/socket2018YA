@@ -5,10 +5,11 @@
 // 2-1. 서버 프로그램이 사용하는 포트를 9000 --> 10000으로 수정 
 #define PORT 9000
 //#define PORT 10000
+#define BUFSIZE 10000
  
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 //char buffer[100] = "hello, world\n";
-char buffer[100] = "Hi, I'm server\n";
+char buffer[BUFSIZE] = "Hi, I'm server\n";
  
 main( )
 {
@@ -17,7 +18,7 @@ main( )
 	int   len;
 	int   n;
 	int rcvLen;
-	char rcvBuffer[100];
+	char rcvBuffer[BUFSIZE];
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -42,11 +43,37 @@ main( )
 		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
 		printf("Client is connected\n");
 		while(1){
+			char *token;
+			char *str[3];
+			int i = 0;
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 			rcvBuffer[rcvLen] = '\0';
 			printf("[%s] received\n", rcvBuffer);
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
+			if(!strncmp(rcvBuffer, "안녕하세요", strlen("안녕하세요")))
+				strcpy(buffer, "안녕하세요. 만나서 반가워요.");
+			else  if(!strncmp(rcvBuffer, "이름이 머야?", strlen("이름이 머야?")))
+                                strcpy(buffer, "내 이름은 김경한이야.");
+			else  if(!strncmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?")))
+                                strcpy(buffer, "나는 23살이야.");
+			else if(!strncasecmp(rcvBuffer, "strlen ", 7)& strlen(rcvBuffer)>7)
+				sprintf(buffer, "문자열의 길이는 %d입니다.", strlen(rcvBuffer) -7);
+			else if(!strncasecmp(rcvBuffer, "STRCMP ", 7)){
+				i=0;
+				token = strtok(rcvBuffer, " ");
+				while(token != NULL){
+					str[i++] = token;
+					token = strtok(NULL, " ");
+				}
+			if(i < 3)
+				sprintf(buffer, "문자열 비교를 위해서는 두 문자열이 필요합니다.");
+			else if(!strcmp(str[1], str[2]))
+				sprintf(buffer, "%s와 %s는 같은 문자열입니다.", str[1], str[2]);
+			else
+				sprintf(buffer, "%s와 %s는 다른 문자열입니다.", str[1], str[2]);
+		}
+
 			n = strlen(buffer);
 			write(c_socket, buffer, n);
 		}
