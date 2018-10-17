@@ -9,13 +9,20 @@
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 //char buffer[100] = "hello, world\n";
 char buffer[100] = "Hi, I'm server\n";
- 
+char bufferHi[100] = "챗봇 : 안녕하세요. 만나서 반가워요.\n";
+char bufferName[100] = "챗봇 : 내 이름은 챗봇 [ 망덕 ]이야.\n";
+char bufferAge[100] = "챗봇 : 나는 5살이야.\n";
+
+char str1[100] = "";
+char str2[100] = "";
+
+
 main( )
 {
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
 	int   len;
-	int   n;
+	int   n, n2, nCount;
 	int rcvLen;
 	char rcvBuffer[100];
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
@@ -45,10 +52,50 @@ main( )
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 			rcvBuffer[rcvLen] = '\0';
 			printf("[%s] received\n", rcvBuffer);
+
+
+
+
+			if(strncasecmp(rcvBuffer, "strlen", strlen("strlen")) == 0)
+			{
+				//str1 = strtok(rcvBuffer," ");
+				//printf(" %s",str1);
+
+				//n2 = strlen(bufferHi);
+				//write(c_socket, bufferHi, n2);
+				
+			}
+
+
+
+			if(strncasecmp(rcvBuffer, "안녕하세요.", strlen("안녕하세요")) == 0)
+			{
+				n2 = strlen(bufferHi);
+				write(c_socket, bufferHi, n2);
+				
+			}	
+
+
+			if(strncasecmp(rcvBuffer, "이름이 뭐야?", strlen("이름이 뭐야")) == 0)
+			{
+				n2 = strlen(bufferName);
+				write(c_socket, bufferName, n2);
+				
+			}
+
+			if(strncasecmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야")) == 0)
+			{
+				n2 = strlen(bufferAge);
+				write(c_socket, bufferAge, n2);
+				
+			}
+		
+
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
 			n = strlen(buffer);
-			write(c_socket, buffer, n);
+			write(c_socket,"\n",5);
+			
 		}
 		close(c_socket);
 		if(!strncasecmp(rcvBuffer, "kill server", 11))
