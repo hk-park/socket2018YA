@@ -3,9 +3,10 @@
 #include<string.h>
 #include<stdlib.h>
 
+#define BUFSIZE 100
 int main(){
 	int fd[2];
-	char buf[255];
+	char buf[BUFSIZE];
 	int pid;
 
 	if(pipe(fd) < 0){//pipe 생성, 생성실패시 프로그램 종료
