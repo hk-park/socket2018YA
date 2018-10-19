@@ -3,7 +3,7 @@
 #include <sys/socket.h>
 #include <string.h>
 
-#define PORT 9000
+#define PORT 10000
 #define IPADDR "127.0.0.1"
 
 int main(){
@@ -36,10 +36,7 @@ int main(){
 			printf("[ERR] Cannot read\n");
 			return -1;
 		}
-		rcvBuffer[n] = '\0';
 		printf("received Data: %s\n", rcvBuffer);
-		// 3-2. 서버로부터 받은 문자열 길이 출력
-		printf("received data length: %d\n", n);
 	}	
 	close(c_socket);
 	return 0;
