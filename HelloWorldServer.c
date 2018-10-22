@@ -47,6 +47,32 @@ main( )
 			printf("[%s] received\n", rcvBuffer);
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
+			else if(!strncmp(rcvBuffer, "안녕하세요", strlen("안녕하세요")))
+				strcpy(buffer, "안녕하세요. 만나서 반가워요.");
+			else if(!strncmp(rcvBuffer, "이름이 머야?", strlen("이름이 머야?")))
+				strcpy(buffer, "내 이름은 박홍규야.");
+			else if(!strncmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?")))
+				strcpy(buffer, "나는 30살이야.");
+			else if(!strncasecmp(rcvBuffer, "strlen ", 7))
+				sprintf(buffer, "내 문자열의 길이는 %d입니다.", strlen(rcvBuffer)-7);
+			else if(!strncasecmp(rcvBuffer, "strcmp ", 7)){
+				char *token;
+				char *str[3];
+				int i = 0;
+				token = strtok(rcvBuffer, " ");
+				while(token != NULL){
+					str[i++] = token;
+					token = strtok(NULL, " ");
+				}
+				if(i<3)
+					sprintf(buffer, "문자열 비교를 위해서는 두 문자열이 필요합니다.");
+				else if(!strcmp(str[1], str[2])) //같은 문자열이면,
+					sprintf(buffer, "%s와 %s는 같은 문자열입니다.", str[1], str[2]);
+				else
+					sprintf(buffer, "%s와 %s는 다른 문자열입니다.", str[1], str[2]);
+					
+			}else
+				 strcpy(buffer, "무슨 말인지 모르겠습니다.");
 			n = strlen(buffer);
 			write(c_socket, buffer, n);
 		}
