@@ -49,20 +49,16 @@ main( )
 				break;
 			else if(strncmp(rcvBuffer, "안녕하세요.", 16) == 0){
                                 strcpy(buffer, "안녕하세요. 만나서 반갑습니다.\n");
-                                write(c_socket, buffer, strlen(buffer));
                         }
                         else if(strncmp(rcvBuffer, "이름이 머야?", 17) == 0){
                                 strcpy(buffer, "내 이름은 이호은 이야\n");
-                                write(c_socket, buffer, strlen(buffer));
                         }
                         else if(strncmp(rcvBuffer, "몇 살이야?", 16) == 0){
                                 strcpy(buffer, "내 나이는 21살 이야\n");
-                                write(c_socket, buffer, strlen(buffer));
                         }
                         else if(strncmp(rcvBuffer, "strlen ", 7) == 0){
 				sprintf(rcvBuffer, "%d", strlen(rcvBuffer)-7);
                                 strcpy(buffer, rcvBuffer);
-                                write(c_socket, buffer, strlen(buffer));
                         }
                         else if(strncmp(rcvBuffer, "strcmp", 6) == 0) {
 				token = strtok(rcvBuffer, sep);
@@ -73,13 +69,12 @@ main( )
 					i++;
 				}
 				sprintf(rcvBuffer, "%d", strcmp(str[1], str[2]));
-				write(c_socket, rcvBuffer, strlen(rcvBuffer));
 			}
                         else{
                                 strcpy(buffer, rcvBuffer);
-                                n = strlen(buffer);
-                                write(c_socket, buffer, n);
                         }
+                        n = strlen(buffer);
+                        write(c_socket, buffer, n);
 		}
 		close(c_socket);
 		if(!strncasecmp(rcvBuffer, "kill server", 11))
