@@ -86,8 +86,21 @@ int main(){
 					while(fgets(tempBuffer, BUFSIZE, (FILE *)fp))
 						strcat(sendBuffer, tempBuffer);
 				fclose(fp);
-				} else
+				} else 
 					sprintf(sendBuffer, "파일이 없습니다.\n");
+			}
+			else if(!strncasecmp(rcvBuffer, "exec",4)){
+				char *token;
+				char *command;
+				token = strtok(rcvBuffer, " ");
+				command = strtok(NULL, "\0");
+				if(command)
+					sprintf(sendBuffer, "exex <명령어> 형태로 입력하세요.");
+				int result = system(command);
+				if(!result)
+					sprintf(sendBuffer, "[%s] command is executed\n",command);
+				else
+					sprintf(sendBuffer, "[%s] command failed\n",command);
 			}
 			write(c_socket, sendBuffer, strlen(sendBuffer));
 		}

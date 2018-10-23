@@ -26,12 +26,14 @@ int main(){
 	}
 
 	while(1){
+		printf("Input your message\n");
 		fgets(wrBuffer, sizeof(wrBuffer), stdin);
 		wrBuffer[strlen(wrBuffer)-1] = '\0';
 		write(c_socket, wrBuffer, strlen(wrBuffer));
 
 		if(strncasecmp(wrBuffer, "quit", 4) == 0 || strncasecmp(wrBuffer, "kill server", strlen("kill server")) == 0)	 //대소문자 상관없이 비교
 			break;
+		printf("<%s> is sent.\n",wrBuffer);
 		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 		if(n < 0){
 			printf("[ERR] Cannot read\n");
