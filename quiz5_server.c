@@ -77,7 +77,7 @@ main( )
 
 			else if(strncasecmp(rcvBuffer, "안녕하세요.", strlen("안녕하세요")) == 0)
 			{
-				strcpy(buffer,"챗봇 : 안녕하세요. 만나서 반가워요.\n");
+				strcpy(buffer,"챗봇-망덕 : 안녕하세요. 만나서 반가워요.\n");
 				
 			}	
 
@@ -90,7 +90,7 @@ main( )
 
 			else if(strncasecmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야")) == 0)
 			{
-				strcpy(buffer,"챗봇 : 나는 5살이야.\n");
+				strcpy(buffer,"챗봇-망 : 나는 5살이야.\n");
 				
 			}
 		
