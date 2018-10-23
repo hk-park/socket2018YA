@@ -9,7 +9,7 @@
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 //char buffer[100] = "hello, world\n";
 char buffer[100] = "Hi, I'm server\n";
- 
+#define NAMESIZE 2 
 main( )
 {
 	int   c_socket, s_socket;
@@ -18,6 +18,9 @@ main( )
 	int   n;
 	int rcvLen;
 	char rcvBuffer[100];
+	char *  fileName[NAMESIZE];
+	FILE * fp;
+	char readBuffer[100];
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -85,6 +88,31 @@ main( )
 
 			n = strlen(buffer);
 			write(c_socket, buffer, n);
+		
+			if(!strncmp(rcvBuffer, "readfile", strlen("readfile"))){
+				int i = 0;
+				char * token;
+				token = strtok(rcvBuffer, " ");
+				while(token != NULL)
+				{
+					fileName[i] = token;
+					token = strtok(NULL, " ");
+
+				}
+				fp = fopen(fileName[1], "r");
+				
+				if(fp)
+				{
+
+				 while(fgets(buffer,100 , (FILE *)fp))
+				 
+				write(c_socket, buffer,100);
+
+				}else{
+
+				printf("cannot find file\n");
+				}
+			}
 		}
 		close(c_socket);
 		if(!strncasecmp(rcvBuffer, "kill server", 11))
