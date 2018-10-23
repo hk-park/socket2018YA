@@ -10,7 +10,6 @@ int main(){
 	int c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
 	char sendBuffer[100], rcvBuffer[100];
-	char str1[100], str2[100];
 	int len, rcvLen;
 	char* token;
 
@@ -54,13 +53,22 @@ int main(){
 				sprintf(sendBuffer, "%d\n", strlen(token));
 			}
 			else if(strncasecmp(rcvBuffer, "strcmp", strlen("strcmp")) == 0){
-				strtok(rcvBuffer, " ");
-				token = strtok(NULL, " ");
-				strcpy(str1, token);
-				token = strtok(NULL, " ");
-				strcpy(str2, token);
-				sprintf(sendBuffer, "%d\n", strcmp(str1, str2));
-			}
+				char *token;
+				char *str[3];
+				int i = 0;
+				token = strtok(rcvBuffer, " ");
+				while(token != NULL){
+					str[i++] = token;
+					token = strtok(NULL, " ");
+				}
+				if(i<3)
+					sprintf(sendBuffer, "문자열 비교를 위해서는 두 문자열이 필요합니다.");
+				else if(!strcmp(str[1], str[2])) //같은 문자열이라면,
+					sprintf(sendBuffer, "%s와 %s는 같은 문자열입니다.", str[1], str[2]);
+				else
+					sprintf(sendBuffer, "%s와 %s는 다른 문자열입니다.", str[1], str[2]);
+			}else
+				strcpy(sendBuffer, "무슨말인지 모르겠습니다.");
 			write(c_socket, sendBuffer, strlen(sendBuffer));
 		}
 		if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", strlen("kill server")) == 0)
