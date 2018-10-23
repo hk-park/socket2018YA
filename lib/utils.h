@@ -27,72 +27,92 @@ int soc_msgcmp(char *source, char* target)
     return !strncasecmp(source,target,strlen(target));
 }
 
-//in_ src, in_ limit,  out_ tokenCnt
-char** soc_strsplit(char *src,char *limit, int *tokenCnt)
+//in_ src, in_ limit, out_ arrCnt, in_ stripNewline
+char** soc_strsplit(char *src,char *limit, int *arrCnt)
 {
     //init 
-    *tokenCnt=0;
+    *arrCnt=0;
     char *pstr=src;
-    char *plimit;
+    int limitIdx=0;
     char **ppStr=NULL;
-    int i=0,j=0;
-    int len=0;
+    int i=0,j=0,srcIdx=0,splitPos=0,splitLen=0;
     int flag=0;
-    int tmp=0;
+    int endIdx=0;
 
+    
+    for(limitIdx=0;limitIdx<strlen(limit);limitIdx++)
+    {
+        if(src[strlen(src)-1]==limit[limitIdx])
+        {
+	    flag=1;
+	    endIdx=strlen(src)-1;
+	    break;
+	}
+    }
+
+    if(!flag)	
+	endIdx=strlen(src);
 
     //get token cnt
-    while(*pstr!='\0')
+    while(srcIdx<=endIdx)
     {
-	for(plimit=limit;*plimit!='\0';plimit++)
+	for(limitIdx=0;limitIdx<strlen(limit);limitIdx++)
 	{
-	    if(*pstr==*plimit)
+	    if(src[srcIdx]==limit[limitIdx] || srcIdx==endIdx)
 	    {
-		(*tokenCnt)++;
+		(*arrCnt)++;
 		break;
 	    }
 	}
 
-	pstr++;
+
+	srcIdx++;
     }
 
-    pstr=src;
-
-    //create token array
-    ppStr=malloc(sizeof(char*) * (*tokenCnt));
-    while(*pstr!='\0')
+    //build array
+    flag=0;
+    srcIdx=0;
+    limitIdx=0;
+    ppStr=malloc(sizeof(char*) * (*arrCnt));
+    while(1)
     {
-
-	for(plimit=limit;*plimit!='\0';plimit++)
+	for(limitIdx=0;limitIdx<strlen(limit);limitIdx++)
 	{
 	    flag=0;
-	    if(*pstr==*plimit)
+
+	    if(src[srcIdx]==limit[limitIdx] || srcIdx==endIdx)
 	    {
-		ppStr[i]=malloc(sizeof(char) * len);
-		for(j=0;j<len;++j)
-		{
-		    ppStr[i][j]=src[tmp+j];
-		}
-		ppStr[i][j]='\0';
-		tmp+=len+1;
 		flag=1;
-		i+=1;
-		len=0;
+
+		ppStr[i]=malloc(sizeof(char) * splitLen);
+
+		for(j=0;j<splitLen;++j)
+		{
+		    ppStr[i][j]=src[splitPos + j];
+		}
+
+	    	ppStr[i][j]='\0';
+		splitPos += splitLen + 1;
+		i++;
+		splitLen = 0;
 		break;
 	    }
 	}
 
-	if(flag==0)
-	    len++;
-	
+	if(srcIdx==endIdx)
+	    break;
 
-	pstr++;
+	if(!flag)
+	    splitLen++;
+
+	srcIdx++;
     }
 
-    for(tmp=0;tmp<i;++tmp)
-    {
-	printf("%s\n",ppStr[tmp]);
-    }
+
+
+    //debug
+    //for(i=0;i<*arrCnt;++i)
+    //	printf("%s\n",ppStr[i]);
 
     return ppStr;
 }
@@ -109,7 +129,7 @@ void soc_freeCharPtrPtr(char** ppStr,int cnt)
 	free(ppStr[i]);
     }
     free(ppStr);
-    
+
 }
 
 //in_ socket,in_ msg
