@@ -68,10 +68,11 @@ main( )
 					token = strtok(NULL, sep);
 					i++;
 				}
-				sprintf(rcvBuffer, "%d", strcmp(str[1], str[2]));
+				if(i < 3) sprintf(buffer, "문자열 비교를 위해서는 두 문자열이 필요합니다.");
+				else sprintf(rcvBuffer, "%d", strcmp(str[1], str[2]));
 			}
                         else{
-                                strcpy(buffer, rcvBuffer);
+				sprintf(buffer, "무슨 말인지 모르겠습니다.");
                         }
                         n = strlen(buffer);
                         write(c_socket, buffer, n);
