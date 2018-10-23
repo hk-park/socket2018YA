@@ -9,9 +9,6 @@
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 //char buffer[100] = "hello, world\n";
 char buffer[100] = "Hi, I'm server\n";
-char bufferHi[100] = "챗봇 : 안녕하세요. 만나서 반가워요.\n";
-char bufferName[100] = "챗봇 : 내 이름은 챗봇 [ 망덕 ]이야.\n";
-char bufferAge[100] = "챗봇 : 나는 5살이야.\n";
 
 char str1[100] = "";
 char str2[100] = "";
@@ -58,60 +55,57 @@ main( )
 
 			if(strncasecmp(rcvBuffer, "strlen", strlen("strlen")) == 0)
 			{
-				sprintf(str1, "%d", strlen(rcvBuffer)-7);
-				n2 = strlen(str1);
-				write(c_socket,str1,n2);
-			
+				sprintf(buffer, "챗봇-망덕 : 전달받은 문자의 길이는 %d 글자입니다.", strlen(rcvBuffer)-7);
+		
 								
 			}
 
-			if(strncasecmp(rcvBuffer, "strcmp", strlen("strcmp")) == 0)
+			else if(strncasecmp(rcvBuffer, "strcmp", strlen("strcmp")) == 0)
 			{
 
 				strtok(rcvBuffer, " ");
 				strcpy(str1, strtok(NULL, " "));
 				strcpy(str2, strtok(NULL, " "));
 				if(strcmp(str1, str2) == 0)
-					sprintf(buffer, "두 문자가 일치합니다.");
+					sprintf(buffer, "챗봇-망덕 : 두 문자가 일치합니다.");
 				else
-					sprintf(buffer, "두 문자가 일치하지 않습니다.");
-
-				n2 = strlen(buffer);
-				write(c_socket,buffer,n2);
-	
+					sprintf(buffer, "챗봇-망덕 : 두 문자가 일치하지 않습니다.");	
 
 			}
 
 
 
-			if(strncasecmp(rcvBuffer, "안녕하세요.", strlen("안녕하세요")) == 0)
+			else if(strncasecmp(rcvBuffer, "안녕하세요.", strlen("안녕하세요")) == 0)
 			{
-				n2 = strlen(bufferHi);
-				write(c_socket, bufferHi, n2);
+				strcpy(buffer,"챗봇 : 안녕하세요. 만나서 반가워요.\n");
 				
 			}	
 
 
-			if(strncasecmp(rcvBuffer, "이름이 뭐야?", strlen("이름이 뭐야")) == 0)
+			else if(strncasecmp(rcvBuffer, "이름이 뭐야?", strlen("이름이 뭐야")) == 0)
 			{
-				n2 = strlen(bufferName);
-				write(c_socket, bufferName, n2);
+				strcpy(buffer,"챗봇-망덕 :  내 이름은 챗봇 [ 망덕 ]이야.\n");
 				
 			}
 
-			if(strncasecmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야")) == 0)
+			else if(strncasecmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야")) == 0)
 			{
-				n2 = strlen(bufferAge);
-				write(c_socket, bufferAge, n2);
+				strcpy(buffer,"챗봇 : 나는 5살이야.\n");
 				
 			}
 		
 
-			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
+			else if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
+
+
+			else{
+				strcpy(buffer,"챗봇-망덕 : 제가 대답할 수 없는 질문이예요");
+			}
+
 			n = strlen(buffer);
+			write(c_socket,buffer,n);
 			write(c_socket,"\n",5);
-			
 		}
 		close(c_socket);
 		if(!strncasecmp(rcvBuffer, "kill server", 11))
@@ -119,6 +113,5 @@ main( )
 	}	
 	close(s_socket);
 }
-
 
 
