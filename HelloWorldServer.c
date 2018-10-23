@@ -47,6 +47,13 @@ main( )
 			printf("[%s] received\n", rcvBuffer);
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
+			else if(!strncmp(rcvBuffer, "안녕하세요", strlen("안녕하세요"))) //클라이언트에서 안녕하세요 보내면 서버에서 대답
+				strcpy(buffer, "안녕하세요. 만나서 반가워요.");
+			else if(!strncmp(rcvBuffer, "이름이 뭐야?", strlen("이름이 뭐야?")))
+				strcpy(buffer, "내 이름은 아론이야.");
+			else if(!strncmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?")))
+				strcpy(buffer, "나는 27살이야.");
+
 			n = strlen(buffer);
 			write(c_socket, buffer, n);
 		}
