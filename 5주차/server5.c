@@ -13,9 +13,9 @@
 //GLOBALs
 char rcvBuffer[BUF_SIZ];
 char sendBuffer[BUF_SIZ];
-char buffer[100] = "My name is Hongkyu.\n";
-char fromStr[100]="Hi, i'm Client\n";
-char toStr[100]="Hi, i'm Server\n";
+char buffer[BUF_SIZ] = "My name is Hongkyu.\n";
+char fromStr[BUF_SIZ]="Hi, i'm Client\n";
+char toStr[BUF_SIZ]="Hi, i'm Server\n";
 
 
 main( )
@@ -48,11 +48,14 @@ main( )
 	printf("listen Fail\n");
 	return -1;
     }
+
     while(1) {
 	len = sizeof(c_addr);
 	c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 
 	printf("client connected\n");
+
+	//update
 	while(1)
 	{
 	    //init
@@ -60,7 +63,7 @@ main( )
 	    memset(sendBuffer,0,BUF_SIZ);
 	    memset(&n,0,sizeof(int));
 
-	    //start update
+	    //read
 	    if((n=read(c_socket,rcvBuffer,sizeof(rcvBuffer)))<0)
 	    {
 		printf("can not read");
@@ -71,6 +74,7 @@ main( )
 
 	    printf("\nClient Msg : %s",rcvBuffer);
 
+	    //process
 	    if(soc_msgcmp(rcvBuffer,"안녕하세요."))
 	    {
 		soc_write(c_socket,"안녕하세요.만나서 반가워요.");

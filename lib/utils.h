@@ -17,7 +17,9 @@
 
 
 /*	    FUNCs	    */
+
 //wrapper of strncasecmp
+//in_ source, in_ target
 int soc_msgcmp(char *source, char* target)
 {
     if(source==NULL || target == NULL)
@@ -25,7 +27,7 @@ int soc_msgcmp(char *source, char* target)
     return !strncasecmp(source,target,strlen(target));
 }
 
-//in_ src, in_ limit, out_ arrStr, out_ arrCnt
+//in_ src, in_ limit,  out_ tokenCnt
 char** soc_strsplit(char *src,char *limit, int *tokenCnt)
 {
     //init 
@@ -95,6 +97,7 @@ char** soc_strsplit(char *src,char *limit, int *tokenCnt)
     return ppStr;
 }
 
+//in_ ppStr, in_ cnt
 void soc_freeCharPtrPtr(char** ppStr,int cnt)
 {
     if(ppStr==NULL)
@@ -109,16 +112,12 @@ void soc_freeCharPtrPtr(char** ppStr,int cnt)
     
 }
 
-
+//in_ socket,in_ msg
 void soc_write(int socket,char *msg)
 {
     write(socket,msg,strlen(msg));
 }
 
-void soc_end()
-{
-
-}
 
 #endif
 
