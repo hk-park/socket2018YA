@@ -48,6 +48,16 @@ int main(void){
 				buffer[strlen(buffer)] = '\0';
 				write(c_socket, buffer, strlen(buffer));
 			}
+			else if(strcmp(rcvbuf, "이름이 머야?")==0){
+				strcpy(buffer, "내이름은 박준성이야.");
+				buffer[strlen(buffer)] = '\0';
+				write(c_socket, buffer, strlen(buffer));
+			}
+			else if(strcmp(rcvbuf, "몇살이야?")==0){
+				strcpy(buffer, "나는 23살이야.");
+				buffer[strlen(buffer)] = '\0';
+				write(c_socket, buffer, strlen(buffer));
+			}
 			else if(strncmp(rcvbuf, "quit", 4)==0 || strncmp(rcvbuf, "kill server", 11)==0)
 				break;
 			else{
