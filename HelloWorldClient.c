@@ -3,7 +3,7 @@
 #include <sys/socket.h>
 #include <string.h>
 
-#define PORT 9000
+#define PORT 10000
 #define IPADDR "127.0.0.1"
 
 int main(){
@@ -24,13 +24,14 @@ int main(){
 		close(c_socket);
 		return -1;
 	}
-	//strcpy(sendBuffer, "Hi, I'm client\n");
+	//strcpy(sendBuffer, "Hi i'm clinet\n");
 	while(1){
 		fgets(sendBuffer, sizeof(sendBuffer), stdin);
-		sendBuffer[strlen(sendBuffer)-1] = '\0';
-		write(c_socket, sendBuffer, strlen(sendBuffer));
-		if(strncasecmp(sendBuffer, "quit", 4) == 0 || strncasecmp(sendBuffer, "kill server", 11) == 0)
+		if(strncmp(sendBuffer, "quit", 4)==0){
 			break;
+		}
+		write(c_socket, sendBuffer, sizeof(sendBuffer));
+
 		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 		if(n < 0){
 			printf("[ERR] Cannot read\n");
@@ -38,9 +39,7 @@ int main(){
 		}
 		rcvBuffer[n] = '\0';
 		printf("received Data: %s\n", rcvBuffer);
-		// 3-2. 서버로부터 받은 문자열 길이 출력
-		printf("received data length: %d\n", n);
-	}	
+	}
 	close(c_socket);
 	return 0;
 
