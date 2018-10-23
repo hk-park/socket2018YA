@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define PORT 9000
-
+#define BUFSIZE 100
 char buffer[100] = "Hi, I'm server\n";
  
 main( )
@@ -14,11 +14,14 @@ main( )
 	int   len;
 	int   n;
 	int rcvLen;
-	char rcvBuffer[100];
+	char rcvBuffer[BUFSIZE];
 	char* sep=" ";
 	char* token;
 	int i = 0;
-	char str[3][50];
+	char str[4][50];
+	FILE *fp;
+	char fileBuffer[BUFSIZE];
+
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -47,20 +50,18 @@ main( )
 			printf("[%s] received\n", rcvBuffer);
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
-			else if(strncmp(rcvBuffer, "안녕하세요.", 16) == 0){
+			else if(!strncmp(rcvBuffer, "안녕하세요.", strlen("안녕하세요.")))
                                 strcpy(buffer, "안녕하세요. 만나서 반갑습니다.\n");
-                        }
-                        else if(strncmp(rcvBuffer, "이름이 머야?", 17) == 0){
+                        else if(!strncmp(rcvBuffer, "이름이 머야?", strlen("이름이 머야?")))
                                 strcpy(buffer, "내 이름은 이호은 이야\n");
-                        }
-                        else if(strncmp(rcvBuffer, "몇 살이야?", 16) == 0){
+                        else if(!strncmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?")))
                                 strcpy(buffer, "내 나이는 21살 이야\n");
-                        }
-                        else if(strncmp(rcvBuffer, "strlen ", 7) == 0){
+                        else if(!strncmp(rcvBuffer, "strlen ", strlen("strlen"))){
 				sprintf(rcvBuffer, "%d", strlen(rcvBuffer)-7);
                                 strcpy(buffer, rcvBuffer);
                         }
-                        else if(strncmp(rcvBuffer, "strcmp", 6) == 0) {
+                        else if(!strncmp(rcvBuffer, "strcmp", strlen("strcmp"))) {
+				memset(str, 0, sizeof(str));
 				token = strtok(rcvBuffer, sep);
 				i=0;
 				while(token){
@@ -68,8 +69,41 @@ main( )
 					token = strtok(NULL, sep);
 					i++;
 				}
-				if(i < 3) sprintf(buffer, "문자열 비교를 위해서는 두 문자열이 필요합니다.");
-				else sprintf(rcvBuffer, "%d", strcmp(str[1], str[2]));
+				if(i==3)sprintf(buffer, "문자열 비교 결과 : %d", strcmp(str[1], str[2]));
+				else sprintf(buffer, "비교할 인자가 많거나 적습니다... 두개만...");
+			}
+			else if(!strncmp(rcvBuffer, "readfile", strlen("readfile"))){
+				memset(str, 0, sizeof(str));
+				token = strtok(rcvBuffer, sep);
+				i=0;
+				while(token){
+					strcpy(str[i], token);
+					token = strtok(NULL, sep);
+					i++;
+				}
+				fp = fopen(str[1], "r");
+				if(fp){
+					while(fgets(fileBuffer, BUFSIZE, (FILE *)fp)){
+					sprintf(buffer, "%s", fileBuffer);
+					n = strlen(buffer);
+                        		write(c_socket, buffer, n);
+					}
+				} else printf("파일을 찾을 수 없습니다.\n");
+				continue;
+			}
+			else if(!strncmp(rcvBuffer, "exec", strlen("exec"))){
+				memset(str, 0, sizeof(str));
+				token = strtok(rcvBuffer, sep);
+				i=0;
+				while(token){
+					strcpy(str[i], token);
+					token = strtok(NULL, sep);
+					i++;
+				}
+				for(i = 2; i < 4; i++){ strcat(str[1]," ");strcat(str[1],str[i]); }
+				int result = system(str[1]);
+				if(!result) sprintf(buffer, "%s", "명령어가 정상적으로 수행되었습니다.\n");
+				else sprintf(buffer, "%s", "몀령어 수행을 실패하였습니다.\n");				
 			}
                         else{
 				sprintf(buffer, "무슨 말인지 모르겠습니다.");
@@ -79,7 +113,7 @@ main( )
 		}
 		close(c_socket);
 		if(!strncasecmp(rcvBuffer, "kill server", 11))
-			break;
+		break;
 	}	
 	close(s_socket);
 }
