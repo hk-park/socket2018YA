@@ -10,8 +10,6 @@
 //char buffer[100] = "hello, world\n";
 char buffer[100] = "Hi, I'm server\n";
 
-char str1[100] = "";
-char str2[100] = "";
 
 
 main( )
@@ -19,7 +17,7 @@ main( )
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
 	int   len;
-	int   n, n2, nCount;
+	int   n;
 	int rcvLen;
 	char rcvBuffer[100];
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
@@ -63,13 +61,23 @@ main( )
 			else if(strncasecmp(rcvBuffer, "strcmp", strlen("strcmp")) == 0)
 			{
 
-				strtok(rcvBuffer, " ");
-				strcpy(str1, strtok(NULL, " "));
-				strcpy(str2, strtok(NULL, " "));
-				if(strcmp(str1, str2) == 0)
-					sprintf(buffer, "챗봇-망덕 : 두 문자가 일치합니다.");
+				char *token;
+				char *str[3];
+				int i = 0;
+				token = strtok(rcvBuffer," ");
+				while(token != NULL){
+
+				str[i++] = token;
+				token = strtok(NULL, " ");
+				}
+				
+				if(i < 3)
+					sprintf(buffer, "챗봇-망덕 : 문자열을 비교하기 위해서는 두 문자열이 필요합니다.");
+
+				else if(!strcasecmp(str[1], str[2]))
+					sprintf(buffer, "챗봇-망덕 : %s  %s 일치합니다.",str[1],str[2]);
 				else
-					sprintf(buffer, "챗봇-망덕 : 두 문자가 일치하지 않습니다.");	
+					sprintf(buffer, "챗봇-망덕 : %s  %s 일치하지 않습니다.",str[1],str[2]);	
 
 			}
 
