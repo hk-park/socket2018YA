@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <string.h> 
 #define PORT 9000
+#define BUFFERSIZE 100
 
 main()
 {
@@ -13,10 +14,6 @@ main()
 	int rcvLen;
 	char rcvBuffer[100];
 	char sendBuffer[100];
-	char cmp1[100];
-	char cmp2[100];
-	int cmpResult;
-	char *cmpPtr;
 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -38,8 +35,8 @@ main()
 	while (1) {
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
-		printf("Client is connected\n");
+		//클라이언트가 접속할 경우
+		printf("클라이언트가 접속함\n");
 		while (1) {
 			// 스트링을 클라이언트에서 받고, 받은 스트링에 대해 \n 문자를 Null로 바꿔줌.
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
@@ -49,41 +46,110 @@ main()
 			// 길이와 받은 스트링을 출력한다.
 
 			// 서버 종료 기능
-			if ((strncasecmp(rcvBuffer, "quit", 4) == 0) 
-			|| (strncasecmp(rcvBuffer, "kill", 4) == 0))
+			if ((!strncasecmp(rcvBuffer, "quit", 4))
+				|| (!strncasecmp(rcvBuffer, "kill", 4)))
 				break;
-			
+
 			// 채팅용 기능
-			else if ((strcasecmp(rcvBuffer, "hi") == 0) 
-			|| (strcmp(rcvBuffer, "안녕") == 0))
+			else if ((!strcasecmp(rcvBuffer, "hi"))
+				|| (!strcmp(rcvBuffer, "안녕")))
 				strcpy(sendBuffer, "Hello, Nice meet you.\n");
-			else if ((strncasecmp(rcvBuffer, "How old are you", 15) == 0) 
-			|| (strcmp(rcvBuffer, "몇살이니") == 0))
+			else if ((!strncasecmp(rcvBuffer, "How old are you", 15))
+				|| (!strcmp(rcvBuffer, "몇살이니")))
 				strcpy(sendBuffer, "I am 3 days old.\n");
-			else if ((strncasecmp(rcvBuffer, "What is your name", 17) == 0) 
-			|| (strcmp(rcvBuffer, "이름이 뭐니") == 0))
+			else if ((!strncasecmp(rcvBuffer, "What is your name", 17))
+				|| (!strcmp(rcvBuffer, "이름이 뭐니")))
 				strcpy(sendBuffer, "I am HelloWorldServer.c!\n");
 
 			// 함수 반환 기능
-			else if (strncasecmp(rcvBuffer, "strlen", 6) == 0) { 
+			else if (!strncasecmp(rcvBuffer, "strlen ", 7)) {
 				// strlen 길이를 반환해준다
 				sendBuffer[0] = '\0';
 				strcpy(rcvBuffer, rcvBuffer + 7);
 				sprintf(sendBuffer, "문자열 [%s]의 바이트는 %d\n", rcvBuffer, strlen(rcvBuffer));
 			}
-			else if (strncasecmp(rcvBuffer, "strcmp", 6) == 0) { 
+			else if (!strncasecmp(rcvBuffer, "strcmp ", 7)) {
 				// strcmp 문자열 두개가 동일시 참, 아니면 거짓 반환
+				char *cmpPtr;
+				char take1[100], take2[100];
+				int cmpResult;
 				cmpPtr = strtok(rcvBuffer, " ");
 				cmpPtr = strtok(NULL, " ");
-				strcpy(cmp1, cmpPtr);
+				if (cmpPtr != NULL) //strtok로 아무 값을 못받을 경우
+					strcpy(take1, cmpPtr);
+				else
+					strcpy(take1, "\0");
 				cmpPtr = strtok(NULL, " ");
-				strcpy(cmp2, cmpPtr);
-				if(strcmp(cmp1, cmp2) == 0)
+				if (cmpPtr != NULL) //strtok로 아무 값을 못받을 경우
+					strcpy(take2, cmpPtr);
+				else
+					strcpy(take2, "\0");
+
+				if (!strcmp(take1, take2))
 					cmpResult = 0;
 				else
 					cmpResult = 1;
-				
-				sprintf(sendBuffer, "[%s]와 [%s]의 strcmp 결과값은 %d\n", cmp1, cmp2, cmpResult);
+
+				sprintf(sendBuffer, "[%s]와 [%s]의 strcmp 결과값은 %d\n", take1, take2, cmpResult);
+
+
+
+
+				/*
+				char *token;
+				char *str[3];
+				int i=0;
+				int cmpResult;
+				token = strtok(rcvBuffer, " ");
+				while(token != NULL){
+						str[i++] = token;
+						token = strtok(rcvBuffer, " ");
+				}
+				if(i < 3)
+						sprintf(sendBuffer, "두 문자열이 필요합니다.\n");
+				else if(str[1] == NULL || str[2] == NULL){
+				printf("ERROR!\n");
+						sprintf(sendBuffer, "받은 문자열이 없습니다.\n");}
+				else{
+						if(!strcmp(str[1], str[2]))
+							cmpResult = 0;
+						else
+							cmpResult = 1;
+
+						sprintf(sendBuffer, "[%s]와 [%s]의 strcmp 결과값은 %d\n", str[1], str[2], cmpResult);
+				  }
+				*/
+				// 교수님 해설 소스코드
+			}
+			else if (!strncasecmp(rcvBuffer, "exec ", 5)) {
+				// 서버에 명령어 전달
+				strcpy(rcvBuffer, rcvBuffer + 5);
+				if (!system(rcvBuffer))
+					sprintf(sendBuffer, "성공함: %s\n", rcvBuffer);
+				else
+					sprintf(sendBuffer, "실행실패: %s\n", rcvBuffer);
+			}
+			else if (!strncasecmp(rcvBuffer, "fopen ", 6)) {
+				// 파일입출력 기
+				strcpy(rcvBuffer, rcvBuffer + 6);
+				FILE *fp;
+				char buffer[BUFFERSIZE];
+
+				if ((fp = fopen(rcvBuffer, "r")) == NULL) {
+					sprintf(sendBuffer, "%s 열기 실패 \n", rcvBuffer);
+				}
+				else {// 파일열기 성공시
+					strcpy(buffer, "파일 열기 성공\n");
+					n = strlen(buffer);
+					write(c_socket, buffer, n);
+					//성공결과를 클라이언트에 보내줌
+
+					while (fgets(buffer, 100, (FILE *)fp)) {
+						n = strlen(buffer);
+						write(c_socket, buffer, n); //매 데이터를 클라이언트에 보냄
+					}
+					strcpy(sendBuffer, " * 전송끝 * \n");
+				}
 			}
 			else
 				sprintf(sendBuffer, "%s는 올바른 명령어가 아닙니다.\n", rcvBuffer);
@@ -95,8 +161,8 @@ main()
 			rcvBuffer[0] = '\0';
 		}
 		close(c_socket);
-		if ((!strncasecmp(rcvBuffer, "kill", 4)) 
-		|| (!strncasecmp(rcvBuffer, "quit", 4)))
+		if ((!strncasecmp(rcvBuffer, "kill", 4))
+			|| (!strncasecmp(rcvBuffer, "quit", 4)))
 			break;
 	}
 	close(s_socket);

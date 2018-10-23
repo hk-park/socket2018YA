@@ -25,6 +25,7 @@ int main(){
 		return -1;
 	}
 	while(1){
+		printf(" [client]# ", n, rcvBuffer);
 		fgets(sendBuffer, sizeof(sendBuffer), stdin);
 		//sendBuffer[strlen(sendBuffer)-1] = '\0'; // 자기가 보내는 문자의 마지막을 \0 처리하는 것이지만 안하는게 좋음.
 		write(c_socket, sendBuffer, strlen(sendBuffer)); // 서버로 문자열을 보냄
