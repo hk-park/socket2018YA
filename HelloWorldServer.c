@@ -9,6 +9,7 @@
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 //char buffer[100] = "hello, world\n";
 char buffer[100] = "Hi, I'm server\n";
+char sendBuffer[BUFSIZE];
  
 main( )
 {
@@ -18,7 +19,10 @@ main( )
 	int   n;
 	int rcvLen;
 	char rcvBuffer[100];
- 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
+ 	FILE *fp;
+
+	fp = fopen("test.txt", "r");
+	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
 	//s_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -55,6 +59,17 @@ main( )
 				strcpy(buffer, "나는 27살이야.");
 			else if(!strncmp(rcvBuffer, "strlen ", strlen("strlen"))) //문자열 길이 출력
 				sprintf(buffer, "문자열의 길이는 %d입니다.", strlen(rcvBuffer)-7); //printf처럼 출력될 내용을 저장할 곳 지정
+			else if(!strncmp(rcvBuffer, "readfile test.txt", strlen("readfile test.txt"))){
+
+			if(fp){
+				while(fgets(buffer, BUFSIZE, (FILE *)fp))
+                			write(c_socket, buffer, BUFSIZE);
+				
+     		        }else{ //파일 포인터가 null이면
+                			printf("파일을 찾을 수 없습니다.\n");
+       			}
+			
+			}
 			else if(!strncmp(rcvBuffer, "strcmp", strlen("strcmp"))){
 				char *token;
 				char *str[3];
