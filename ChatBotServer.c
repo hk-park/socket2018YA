@@ -79,9 +79,9 @@ main( )
 					str[i++] = compare;
 					compare = strtok(NULL, " ");
 				}
-				if(i<3)	sprintf(buffer, "Please wirte two string.");
-				else if(!strcmp(str[1],str[2]))	sprintf(buffer, "%s and %s are same.", str[1], str[2]);
-				else	sprintf(buffer, "%s and %s are different.", str[1], str[2]);
+				if(i<3)	sprintf(buffer, "두개의 문자열이 필요합니다.");
+				else if(!strcmp(str[1],str[2]))	sprintf(buffer, "%s 와 %s는 같은 문자열입니다.", str[1], str[2]);
+				else	sprintf(buffer, "%s 와 %s 는 다른 문자열입니다.", str[1], str[2]);
 			}
 	
 			n = strlen(buffer);
