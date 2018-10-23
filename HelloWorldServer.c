@@ -8,16 +8,18 @@
  
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 //char buffer[100] = "hello, world\n";
-char buffer[100] = "Hi, I'm server\n";
+//char buffer[100] = "Hi, I'm server\n";
  
 main( )
 {
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
-	int   len;
-	int   n;
-	int rcvLen;
-	char rcvBuffer[100];
+	int   len, n;
+	int rcvLen, i;
+	char rcvBuffer[100], Buffer[100];
+	char cmp1[100], cmp2[100];
+
+	char str1[100], str2[100];
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -41,14 +43,44 @@ main( )
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
 		printf("Client is connected\n");
+
 		while(1){
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 			rcvBuffer[rcvLen] = '\0';
+			strcpy(Buffer, "\0");
 			printf("[%s] received\n", rcvBuffer);
+
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
-			n = strlen(buffer);
-			write(c_socket, buffer, n);
+
+			if(strncmp(rcvBuffer, "안녕하세요", strlen("안녕하세요")) == 0) {
+				strcpy(Buffer, "안녕하세요. 만나서 반가워요.");
+				Buffer[strlen(Buffer)] = '\0';
+				write(c_socket, Buffer, strlen(Buffer));
+			} else if(strncmp(rcvBuffer, "이름이 뭐야?", strlen("이름이 뭐야?")) == 0) {
+				strcpy(Buffer, "난 수빈이야");
+				Buffer[strlen(Buffer)] = '\0';
+				write(c_socket, Buffer, strlen(Buffer));
+			} else if(strncmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?"))==0) {
+				strcpy(Buffer, "나는 22살이야");
+				Buffer[strlen(Buffer)] = '\0';
+				write(c_socket, Buffer, strlen(Buffer));
+			} else if (strncasecmp(rcvBuffer, "strlen",6) == 0) {
+				sprintf(Buffer, "문자열 %s : %d",rcvBuffer, strlen(rcvBuffer)-7);
+				write(c_socket, Buffer, strlen(Buffer));
+			} else if (strncasecmp(rcvBuffer, "strcmp", 6) ==0 ) {
+				strtok(rcvBuffer, " ");
+				strcpy(cmp1, strtok(NULL, " "));
+				strcpy(cmp2, strtok(NULL, " "));
+				if(strcmp(cmp1, cmp2) == 0) {
+					strcpy(Buffer, " 0 ");
+				} else {
+					sprintf(Buffer, " %d ", strcmp(cmp1, cmp2));
+				}
+				write(c_socket, Buffer, strlen(Buffer));
+			} else
+				write(c_socket," 다시 시도 하세요 " ,12);
+
 		}
 		close(c_socket);
 		if(!strncasecmp(rcvBuffer, "kill server", 11))
