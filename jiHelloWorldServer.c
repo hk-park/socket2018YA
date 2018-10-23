@@ -11,6 +11,7 @@
 char buffer[100] = "ㅇㅇㅇ"; 
 main( )
 {
+	FILE *fp
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
 	int   len;
@@ -88,6 +89,11 @@ main( )
 					sprintf(buffer, "%d", n);
 				}
 			}
+			else if(//클라이언트가 "readfile<파일명>"이라고 보내면")
+)			{
+				//서버는 파일명의 파일을 열어서 파일 내용을 읽어서 클라이언트에게 응답
+			}
+			
 			write(c_socket, buffer, strlen(buffer));
 				
 		}
