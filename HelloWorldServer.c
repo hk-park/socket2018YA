@@ -3,13 +3,12 @@
 #include <sys/socket.h>
 #include <string.h>
 // 2-1. 서버 프로그램이 사용하는 포트를 9000 --> 10000으로 수정 
-#define PORT 9000
+#define PORT 10000
 //#define PORT 10000
- 
+
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 //char buffer[100] = "hello, world\n";
 char buffer[100] = "Hi, I'm server\n";
- 
 main( )
 {
 	int   c_socket, s_socket;
@@ -18,6 +17,8 @@ main( )
 	int   n;
 	int rcvLen;
 	char rcvBuffer[100];
+	FILE *fp;
+	fp = fopen("test.txt","r");
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -47,10 +48,21 @@ main( )
 			printf("[%s] received\n", rcvBuffer);
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
+			if(strncasecmp(rcvBuffer,"readfile",10 == 0))
+			{
+				if(fp)	
+				{
+					while(fgets(buffer,100,(FILE *)fp))
+					strcpy(buffer,"test.txt");
+				}
+				else
+					printf("No find File\n");
+			}
 			n = strlen(buffer);
 			write(c_socket, buffer, n);
 		}
 		close(c_socket);
+		return 0;
 		if(!strncasecmp(rcvBuffer, "kill server", 11))
 			break;
 	}	
