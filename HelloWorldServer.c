@@ -47,6 +47,10 @@ main( )
 			printf("[%s] received\n", rcvBuffer);
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
+			else if(!strncmp(rcvBuffer, "HI", strlen("HI")))
+				strcpy(buffer, "HIHI");
+			else if(!strncmp(rcvBuffer, "what your name", strlen("what your name")))
+				strcpy(buffer, "JISOOHYUN");
 			n = strlen(buffer);
 			write(c_socket, buffer, n);
 		}
