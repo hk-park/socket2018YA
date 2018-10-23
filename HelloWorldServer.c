@@ -2,12 +2,9 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
-// 2-1. 서버 프로그램이 사용하는 포트를 9000 --> 10000으로 수정 
+
 #define PORT 9000
-//#define PORT 10000
- 
-// 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
-//char buffer[100] = "hello, world\n";
+
 char buffer[100] = "Hi, I'm server\n";
  
 main( )
@@ -18,10 +15,13 @@ main( )
 	int   n;
 	int rcvLen;
 	char rcvBuffer[100];
+	char* sep=" ";
+	char* token;
+	int i = 0;
+	char str[3][50];
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
-	//s_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	s_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 	s_addr.sin_family = AF_INET;
 	s_addr.sin_port = htons(PORT);
@@ -39,7 +39,7 @@ main( )
 	while(1) {
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
+		
 		printf("Client is connected\n");
 		while(1){
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
@@ -47,8 +47,39 @@ main( )
 			printf("[%s] received\n", rcvBuffer);
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
-			n = strlen(buffer);
-			write(c_socket, buffer, n);
+			else if(strncmp(rcvBuffer, "안녕하세요.", 16) == 0){
+                                strcpy(buffer, "안녕하세요. 만나서 반갑습니다.\n");
+                                write(c_socket, buffer, strlen(buffer));
+                        }
+                        else if(strncmp(rcvBuffer, "이름이 머야?", 17) == 0){
+                                strcpy(buffer, "내 이름은 이호은 이야\n");
+                                write(c_socket, buffer, strlen(buffer));
+                        }
+                        else if(strncmp(rcvBuffer, "몇 살이야?", 16) == 0){
+                                strcpy(buffer, "내 나이는 21살 이야\n");
+                                write(c_socket, buffer, strlen(buffer));
+                        }
+                        else if(strncmp(rcvBuffer, "strlen ", 7) == 0){
+				sprintf(rcvBuffer, "%d", strlen(rcvBuffer)-7);
+                                strcpy(buffer, rcvBuffer);
+                                write(c_socket, buffer, strlen(buffer));
+                        }
+                        else if(strncmp(rcvBuffer, "strcmp", 6) == 0) {
+				token = strtok(rcvBuffer, sep);
+				i=0;
+				while(token){
+					strcpy(str[i], token);
+					token = strtok(NULL, sep);
+					i++;
+				}
+				sprintf(rcvBuffer, "%d", strcmp(str[1], str[2]));
+				write(c_socket, rcvBuffer, strlen(rcvBuffer));
+			}
+                        else{
+                                strcpy(buffer, rcvBuffer);
+                                n = strlen(buffer);
+                                write(c_socket, buffer, n);
+                        }
 		}
 		close(c_socket);
 		if(!strncasecmp(rcvBuffer, "kill server", 11))
