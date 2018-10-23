@@ -13,7 +13,15 @@ main( )
 	int   len;
 	int   n;
 	int rcvLen;
-	char rcvBuffer[BUFSIZ], *ptr, *ptr2;
+	char rcvBuffer[BUFSIZ];
+
+	FILE *fp;
+	char buffer[BUFSIZ];
+
+	char *token;
+	char *str[3];
+	int i = 0;
+
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -50,29 +58,46 @@ main( )
 				strcpy(buffer, "내 이름은 김하누리야");
 			} else if(strncmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?"))==0){
 				strcpy(buffer, "나는 23살이야");
-			} else{
-				strcpy(buffer, "No data");
-			}
-
-			if(strncmp(rcvBuffer, "strlen ", 7) == 0){
+			} else if(strncmp(rcvBuffer, "strlen ", 7) == 0){
 				n = strlen(rcvBuffer)-7;
 				sprintf(buffer, "%d", n);
 			} else if(strncmp(rcvBuffer, "strcmp ", 7) == 0){
-				ptr = strtok(rcvBuffer, " ");
+				token = strtok(rcvBuffer, " ");
 
-				ptr = strtok(NULL, " ");
-				ptr2 = strtok(NULL, " ");
-
-				if(strcmp(ptr, ptr2) == 0){
-				    	n = 0;
-					sprintf(buffer, "%d", n);
-				} else {
-					n = -1;
-					sprintf(buffer, "%d", n);
+				while(token != NULL){
+					str[i++] = token;
+					token = strtok(NULL, " ");
 				}
+
+				if(i<3){
+					sprintf(buffer, "error");
+				} else if(!strcmp(str[1], str[2])){
+					sprintf(buffer, "%d", 0);
+				} else {
+					sprintf(buffer, "%d", -1);
+				}
+			} else if(strncmp(rcvBuffer, "readfile ", 9)){
+				token = strtok(rcvBuffer, " ");
+				
+				while(token != NULL){
+					str[i++] = token;
+					token = strtok(NULL, " ");
+				}
+				if(i<1){
+					sprintf(buffer, "error");
+				} else {
+					fp = fopen(str[1], "r");
+					while(fgets(buffer, BUFSIZ, (FILE*)fp)){
+						write(c_socket, buffer, strlen(buffer));
+					}
+					strcpy(buffer, "success");			
+				}
+			} else {
+				strcpy(buffer, "No data");
 			}
 
 			write(c_socket, buffer, strlen(buffer));
+			memset(buffer, 0, sizeof(buffer));
 		}
 
 		close(c_socket);
