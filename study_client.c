@@ -31,7 +31,7 @@ int main(){
 	}
 
 	while(1){
-		printf("채팅: ");
+		printf("채팅 : ");
 		fgets(sendBuffer, sizeof(sendBuffer), stdin);
 		sendBuffer[strlen(sendBuffer)-1] = '\0';
 		write(c_socket, sendBuffer, strlen(sendBuffer));

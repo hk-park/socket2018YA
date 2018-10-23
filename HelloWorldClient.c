@@ -41,6 +41,8 @@ int main(){
 		// 3-2. 서버로부터 받은 문자열 길이 출력
 		printf("received data length: %d\n", n);
 	}	
+
+
 	close(c_socket);
 	return 0;
 
