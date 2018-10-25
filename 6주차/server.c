@@ -34,8 +34,11 @@ main( )
     //for FILE
     FILE *fp=NULL;
     char fileBuf[BUF_SIZ]="";
-    char *fileStrBuild=NULL;
     int fileSize=0;
+
+    //for exec
+    char *strBuild=NULL;
+    int status=0;
 
     //init socket
     memset(&s_addr, 0, sizeof(s_addr));
@@ -97,14 +100,14 @@ main( )
 		ppStr=soc_strsplit(rcvBuffer,dlim,&cntSplits);
 		sprintf(sendBuffer,"[%s] strlen : %d",ppStr[1],strlen(ppStr[1]));
 		soc_write(c_socket,sendBuffer);
-		soc_freeCharPtrPtr(ppStr,cntSplits);
+		soc_freeCharPtrPtr(&ppStr,cntSplits);
 	    }
 	    else if(soc_msgcmp(rcvBuffer,"strcmp"))
 	    {
 		ppStr=soc_strsplit(rcvBuffer,dlim,&cntSplits);
 		sprintf(sendBuffer,"[%s] [%s] strcmp : %d",ppStr[1],ppStr[2],strcmp(ppStr[1],ppStr[2]));
 		soc_write(c_socket,sendBuffer);
-		soc_freeCharPtrPtr(ppStr,cntSplits);
+		soc_freeCharPtrPtr(&ppStr,cntSplits);
 	    }
 	    else if(soc_msgcmp(rcvBuffer,"readfile"))
 	    {
@@ -135,20 +138,24 @@ main( )
 		}
 
 		fclose(fp);
-		soc_freeCharPtrPtr(ppStr,cntSplits);
+		soc_freeCharPtrPtr(&ppStr,cntSplits);
 	    }
 	    else if(soc_msgcmp(rcvBuffer,"exec"))
 	    {
 		ppStr=soc_strsplit(rcvBuffer," ", &cntSplits);
+		strBuild=soc_strBuildFromArray(ppStr,cntSplits,1);
+		status=system(strBuild);
+		
 		//or 특징 : 첫번째 조건이 만족되면 이후 조건문들 수행 안함
-		if(ppStr==NULL || system(ppStr[1])!=0)
+		if(ppStr == NULL || status != 0 )
 		{
 		    soc_write(c_socket,"!!exec error occured!!");
 		    continue;
 		}
 		sprintf(sendBuffer,"[%s] processed",ppStr[1]);
 		soc_write(c_socket,sendBuffer);
-		soc_freeCharPtrPtr(ppStr,cntSplits);
+		soc_freeCharPtrPtr(&ppStr,cntSplits);
+		soc_freeCharPtr(&strBuild);
 	    }
 	    else if(soc_msgcmp(rcvBuffer,"quit"))
 	    {

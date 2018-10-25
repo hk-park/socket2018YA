@@ -114,19 +114,58 @@ char** soc_strsplit(char *src,char *limit, int *strCnt)
     return ppStr;
 }
 
-//in_ ppStr, in_ cnt
-void soc_freeCharPtrPtr(char** ppStr,int cnt)
+char * soc_strBuildFromArray(char **ppStr,int arrCnt,int offset)
+{
+    char *pBuild=NULL;
+    int len=0;
+    int i=0;
+
+    if(ppStr==NULL)
+	return;
+
+    for(i=offset;i < arrCnt;++i)
+    {
+	//문자열 뒤에 공백 추가하기위해 +1
+	len+=strlen(ppStr[i])+1;
+    }
+
+    //널문자를 위해 +1
+    pBuild=malloc(len+1);
+
+    for(i=offset;i < arrCnt;++i)
+    {
+	strcat(pBuild,ppStr[i]);
+	strcat(pBuild," ");
+    }
+
+    pBuild[len]='\0';
+    
+    return pBuild;
+}
+
+//out_ pppStr, in_ cnt
+void soc_freeCharPtrPtr(char*** pppStr,int cnt)
+{
+    int i=0;
+    if(pppStr==NULL)
+	return;
+
+    for(i=0;i<cnt;++i)
+    {
+	free((*pppStr)[i]);
+    }
+    free(*pppStr);
+    *pppStr=NULL;
+}
+
+//out_ ppStr
+void soc_freeCharPtr(char** ppStr)
 {
     if(ppStr==NULL)
 	return;
 
-    int i=0;
-    for(i=0;i<cnt;++i)
-    {
-	free(ppStr[i]);
-    }
-    free(ppStr);
-
+    free(*ppStr);
+    *ppStr=NULL;
 }
 
 //in_ socket,in_ msg
