@@ -27,11 +27,11 @@ int soc_msgcmp(char *source, char* target)
     return !strncasecmp(source,target,strlen(target));
 }
 
-//in_ src, in_ limit, out_ arrCnt, in_ stripNewline
-char** soc_strsplit(char *src,char *limit, int *arrCnt)
+//in_ src, in_ limit, out_ strCnt
+char** soc_strsplit(char *src,char *limit, int *strCnt)
 {
     //init 
-    *arrCnt=0;
+    *strCnt=0;
     char *pstr=src;
     int limitIdx=0;
     char **ppStr=NULL;
@@ -39,19 +39,20 @@ char** soc_strsplit(char *src,char *limit, int *arrCnt)
     int flag=0;
     int endIdx=0;
 
-    
+    endIdx=strlen(src);
     for(limitIdx=0;limitIdx<strlen(limit);limitIdx++)
     {
-        if(src[strlen(src)-1]==limit[limitIdx])
+        if(src[endIdx-1]==limit[limitIdx])
         {
 	    flag=1;
-	    endIdx=strlen(src)-1;
+	    endIdx--;
 	    break;
 	}
     }
 
-    if(!flag)	
-	endIdx=strlen(src);
+    if(flag==0 && src[endIdx-1]=='\n')
+	endIdx--;
+    flag=0;
 
     //get token cnt
     while(srcIdx<=endIdx)
@@ -60,21 +61,22 @@ char** soc_strsplit(char *src,char *limit, int *arrCnt)
 	{
 	    if(src[srcIdx]==limit[limitIdx] || srcIdx==endIdx)
 	    {
-		(*arrCnt)++;
+		(*strCnt)++;
 		break;
 	    }
 	}
-
-
 	srcIdx++;
     }
 
+    if(*strCnt<=1)
+	return NULL;
+
     //build array
-    flag=0;
     srcIdx=0;
     limitIdx=0;
-    ppStr=malloc(sizeof(char*) * (*arrCnt));
-    while(1)
+    ppStr=malloc(sizeof(char*) * (*strCnt));
+
+    while(srcIdx<=endIdx)
     {
 	for(limitIdx=0;limitIdx<strlen(limit);limitIdx++)
 	{
@@ -99,19 +101,14 @@ char** soc_strsplit(char *src,char *limit, int *arrCnt)
 	    }
 	}
 
-	if(srcIdx==endIdx)
-	    break;
-
 	if(!flag)
 	    splitLen++;
 
 	srcIdx++;
     }
 
-
-
     //debug
-    //for(i=0;i<*arrCnt;++i)
+    //for(i=0;i<*strCnt;++i)
     //	printf("%s\n",ppStr[i]);
 
     return ppStr;

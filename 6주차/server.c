@@ -109,7 +109,7 @@ main( )
 	    else if(soc_msgcmp(rcvBuffer,"readfile"))
 	    {
 		ppStr=soc_strsplit(rcvBuffer," ",&cntSplits);
-		
+
 		fp=fopen(ppStr[1],"r");
 		if(!fp)
 		{
@@ -124,6 +124,7 @@ main( )
 		sprintf(sendBuffer,"readfile %d",fileSize);
 		soc_write(c_socket,sendBuffer);
 
+		//클라이언트로부터 준비완료 메세지 수신받고 진행
 		read(c_socket,rcvBuffer,BUF_SIZ);
 		if(soc_msgcmp(rcvBuffer,"ready to go"))
 		{
@@ -138,7 +139,16 @@ main( )
 	    }
 	    else if(soc_msgcmp(rcvBuffer,"exec"))
 	    {
-
+		ppStr=soc_strsplit(rcvBuffer," ", &cntSplits);
+		//or 특징 : 첫번째 조건이 만족되면 이후 조건문들 수행 안함
+		if(ppStr==NULL || system(ppStr[1])!=0)
+		{
+		    soc_write(c_socket,"!!exec error occured!!");
+		    continue;
+		}
+		sprintf(sendBuffer,"[%s] processed",ppStr[1]);
+		soc_write(c_socket,sendBuffer);
+		soc_freeCharPtrPtr(ppStr,cntSplits);
 	    }
 	    else if(soc_msgcmp(rcvBuffer,"quit"))
 	    {
