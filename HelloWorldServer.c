@@ -18,7 +18,8 @@ main( )
 	char* sep=" ";
 	char* token;
 	int i = 0;
-	char str[4][50];
+	char str[3][BUFSIZE];
+	char command[BUFSIZE];
 	FILE *fp;
 	char fileBuffer[BUFSIZE];
 
@@ -92,16 +93,11 @@ main( )
 				continue;
 			}
 			else if(!strncmp(rcvBuffer, "exec", strlen("exec"))){
-				memset(str, 0, sizeof(str));
+				memset(command, 0, sizeof(command));
 				token = strtok(rcvBuffer, sep);
-				i=0;
-				while(token){
-					strcpy(str[i], token);
-					token = strtok(NULL, sep);
-					i++;
-				}
-				for(i = 2; i < 4; i++){ strcat(str[1]," ");strcat(str[1],str[i]); }
-				int result = system(str[1]);
+				strcpy(command,strtok(NULL, "\0"));
+				printf("command : %s\n", command);
+				int result = system(command);
 				if(!result) sprintf(buffer, "%s", "명령어가 정상적으로 수행되었습니다.\n");
 				else sprintf(buffer, "%s", "몀령어 수행을 실패하였습니다.\n");				
 			}
