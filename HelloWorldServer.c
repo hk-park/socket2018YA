@@ -69,7 +69,7 @@ int main(){
 				else
 					sprintf(sendBuffer, "%s와 %s는 다른 문자열입니다.", str[1], str[2]);
 			}
-			else if(!strncasecmp(rcvBuffer, "readfile", 8)){
+			else if(!strncasecmp(rcvBuffer, "readfile ", 9)){
 				char *token;
 				char *file[2];
 				int i = 0;
