@@ -5,15 +5,16 @@
 
 // 2-1. 서버 프로그램이 사용하는 포트
 #define PORT 9000
-
+#define BUFSIZE 10000
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
-char buffer[100] = "Hi, I'm Server.\n";
+char buffer[BUFSIZE] = "Hi, I'm Server.\n";
+char nothing[BUFSIZE] = "아무것도 아님\n";
 
 int main()
 {
 	int c_socket, s_socket, rcvLen;		// 변수 선언
 	struct sockaddr_in s_addr, c_addr;	// 클라이언트에서 보낸 데이터 받음
-	char rcvBuffer[100];				// 소켓 통신 정보 (구조체)	
+	char rcvBuffer[BUFSIZE], *ptr,  *ptr1, *ptr2, buffer[BUFSIZE];				// 소켓 통신 정보 (구조체)	
 
 	s_socket = socket(PF_INET, SOCK_STREAM, 0);			// 서버 소켓 생성	
 
@@ -65,10 +66,36 @@ int main()
 				else
 					sprintf(buffer, "다른 문자 : -1");
 			}
-			else
-				strcpy(buffer, "Match Type : X");
-
-			write(c_socket, buffer, strlen(buffer));
+			else if(!strncasecmp(rcvBuffer, "readfile", 8)){
+				ptr = strtok(rcvBuffer, " ");
+				ptr = strtok(NULL, " ");
+				ptr1 = ptr;
+				fp = fopen(ptr1, "r");
+				if(fp){
+					while(fgets(fbuffer, BUFSIZE, (FILE *)fp))
+							strcat(buffer, fbuffer);
+				}
+				else{
+					strcpy(buffer, "존재하지 않는 파일");
+				}
+				fclose(fp);	
+				write(c_socket, buffer, strlen(buffer));			
+			}
+			else if(!strncasecmp(rcvBuffer, "exec", 4)){
+				ptr = strtok(rcvBuffer, " ");
+				ptr = strtok(NULL, "NULL");
+				ptr1 = ptr;			
+				int ret = system(ptr1);
+				if(!ret)
+					sprintf(buffer, "<%s> command Success!!\n", ptr);
+				else
+					sprintf(buffer, "<%s> command Failed!!\n", ptr);
+				write(c_socket, buffer, strlen(buffer));
+			}
+			else{
+				n = strlen(nothing);
+				write(c_socket, nothing, n);
+			}
 		}
 		close(c_socket);
 		if (!strncasecmp(rcvBuffer, "kill server", 11))
