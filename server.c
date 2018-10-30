@@ -62,6 +62,7 @@ main( )
 				n = strlen(rcvBuffer)-7;
 				sprintf(buffer, "%d", n);
 			} else if(strncmp(rcvBuffer, "strcmp ", 7) == 0){
+				i=0;
 				token = strtok(rcvBuffer, " ");
 
 				while(token != NULL){
@@ -76,22 +77,41 @@ main( )
 				} else {
 					sprintf(buffer, "%d", -1);
 				}
-			} else if(strncmp(rcvBuffer, "readfile ", 9)){
+			} else if(strncmp(rcvBuffer, "readfile ", 9) == 0){
+				i=0;
 				token = strtok(rcvBuffer, " ");
 				
 				while(token != NULL){
 					str[i++] = token;
 					token = strtok(NULL, " ");
 				}
-				if(i<1){
+				if(i<2){
 					sprintf(buffer, "error");
-				} else {
-					fp = fopen(str[1], "r");
-					while(fgets(buffer, BUFSIZ, (FILE*)fp)){
-						write(c_socket, buffer, strlen(buffer));
-					}
-					strcpy(buffer, "success");			
 				}
+
+				fp = fopen(str[1], "r");
+				if(fp){
+					char temp[BUFSIZ];
+					memset(buffer, 0, BUFSIZ);
+
+					while(fgets(temp, BUFSIZ, (FILE*)fp)){
+						strcat(buffer, temp);
+					}
+					fclose(fp);			
+				} else {
+					sprintf(buffer, "No file");
+				}
+
+			} else if(strncmp(rcvBuffer, "exec ", 5)==0){
+				char *command;
+				token = strtok(rcvBuffer, " ");
+				command = strtok(NULL, "\0");
+				printf("command: %s\n", command);
+				int result = system(command);
+				if(result)
+					sprintf(buffer, "error");
+				else
+					sprintf(buffer, "success");
 			} else {
 				strcpy(buffer, "No data");
 			}
