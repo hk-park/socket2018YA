@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #define BUFSIZE 100
 int main(){
