@@ -14,6 +14,7 @@ int main(){
 	int n;
 	char rcvBuffer[100];
 	char sendBuffer[100];
+	char tmpBuffer[100];
 	c_socket = socket(PF_INET, SOCK_STREAM, 0);
 
 	
@@ -44,7 +45,9 @@ int main(){
 
 		if(strncasecmp(sendBuffer, "quit", 4) == 0 || strncasecmp(sendBuffer, "kill server", 11) == 0)
 			break;
-		
+
+				
+
 
 		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 
