@@ -4,14 +4,15 @@
 #include <string.h>
 
 #define PORT 9000
+#define BUFSIZE 100
 #define IPADDR "127.0.0.1"
 
 main(){
 	int c_socket;
 	struct sockaddr_in c_addr;
 	int n;
-	char rcvBuffer[100];
-	char sendBuffer[100];
+	char rcvBuffer[BUFSIZE];
+	char sendBuffer[BUFSIZE];
 	c_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&c_addr, 0, sizeof(c_addr));
@@ -40,4 +41,3 @@ main(){
 	}	
 	close(c_socket);
 }
-

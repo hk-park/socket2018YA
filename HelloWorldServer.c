@@ -4,6 +4,8 @@
 #include <string.h>
 
 #define PORT 9000
+#define COM 5
+#define BUFSIZE 100
 #define IPADDR "127.0.0.1"
 
 void sendToClient(int c_socket, char *buffer){
@@ -16,10 +18,13 @@ main( )
 	struct sockaddr_in s_addr, c_addr;
 	int len, check;
 	int rcvLen;
-	char buffer[100];
-	char rcvBuffer[100];
-	char tok[100];
-	char tokCmp[100];
+	char * command, *token;
+	char buffer[BUFSIZE];
+	char rcvBuffer[BUFSIZE];
+	char tok[BUFSIZE];
+	char tokCmp[BUFSIZE];
+	FILE *fp;
+
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -47,17 +52,17 @@ main( )
 			rcvBuffer[rcvLen] = '\0';
 			printf("Client >> %s\n", rcvBuffer);
 
-			if(!strncasecmp(rcvBuffer, "quit", 4) || !strncasecmp(rcvBuffer, "kill server", 11))
+			if(!strncasecmp(rcvBuffer, "quit", strlen("quit")) || !strncasecmp(rcvBuffer, "kill server", strlen("kill server")))
 				break;
-			else if(!strncasecmp(rcvBuffer, "안녕하세요.", 16))
+			else if(!strncasecmp(rcvBuffer, "안녕하세요.", strlen("안녕하세요.")))
 				strcpy(buffer, "안녕하세요. 만나서 반가워요.");		
-			else if(!strncasecmp(rcvBuffer, "이름이 머야?", 17))
+			else if(!strncasecmp(rcvBuffer, "이름이 머야?", strlen("이름이 머야?")))
 				strcpy(buffer, "내 이름은 김서원이야.");		
-			else if(!strncasecmp(rcvBuffer, "몇 살이야?", 14))
+			else if(!strncasecmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?")))
 				strcpy(buffer, "나는 26살이야...");
-			else if(!strncasecmp(rcvBuffer, "strlen ", 7))
+			else if(!strncasecmp(rcvBuffer, "strlen", strlen("strlen")))
 				sprintf(buffer, "%d", strlen(rcvBuffer)-7);
-			else if(!strncasecmp(rcvBuffer, "strcmp ", 7)){
+			else if(!strncasecmp(rcvBuffer, "strcmp", strlen("strcmp"))){
 				strtok(rcvBuffer, " ");
 				strcpy(tok, strtok(NULL, " "));
 				strcpy(tokCmp, strtok(NULL, " "));
@@ -65,6 +70,27 @@ main( )
 					sprintf(buffer, "문자열 같음(0)");
 				else
 					sprintf(buffer, "문자열 같지 않음(1)");
+			}
+			else if(!strncasecmp(rcvBuffer, "readfile", strlen("readfile"))){
+				strtok(rcvBuffer, " ");
+				strcpy(tok, strtok(NULL, " "));
+
+				fp = fopen(tok, "r");	
+				if(fp){
+					while(fgets(buffer, BUFSIZE, (FILE *) fp))
+						sendToClient(c_socket, buffer);
+					continue;
+				} 
+				else sprintf(buffer, "%s", "파일이 없습니다.");
+			}
+			else if(!strncasecmp(rcvBuffer, "exec", strlen("exec"))){
+				token = strtok(rcvBuffer, " ");
+				command = strtok(NULL, "\0");
+
+				if(!system(command))
+					sprintf(buffer, "%s", "command is executed.");
+				else
+					sprintf(buffer, "%s", "command failed.");
 			}
 			else
 				strcpy(buffer, "답변할 수 없는 질문입니다.");
@@ -74,10 +100,9 @@ main( )
 		printf("Client is logout.\n");
 		close(c_socket);
 
-		if(strncasecmp(rcvBuffer, "kill server", 11) == 0)
+		if(strncasecmp(rcvBuffer, "kill server", strlen("kill server")) == 0)
 			break;
 	}	
 	printf("Bye.\n");
 	close(s_socket);
 }
-
