@@ -16,6 +16,7 @@ int main(void){
 	char rcvbuf[100];
 	char tmpbuf1[100];
 	char tmpbuf2[100];
+	char* tmptoken;
 	FILE* fp;
 
 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
@@ -103,9 +104,9 @@ int main(void){
 				strtok(rcvbuf, " ");
 				strcpy(tmpbuf1, "\0");
 				while(1){
-					strcpy(tmpbuf2, strtok(NULL, " "));
-					if(tmpbuf2==NULL) break;
-					strcat(tmpbuf1, tmpbuf2);
+					tmptoken = strtok(NULL, " ");
+					if(tmptoken==NULL) break;
+					strcat(tmpbuf1, tmptoken);
 				}
 				itemp = system(tmpbuf1);
 				if(!itemp){
