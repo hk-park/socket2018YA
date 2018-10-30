@@ -6,6 +6,7 @@ int main(){
 	char buffer[BUFSIZE];
 
 	fp = fopen("test.txt", "r");
+
 	if(fp){
 		while(fgets(buffer, BUFSIZE, (FILE*) fp))
 			printf("%s\n", buffer);
