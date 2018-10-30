@@ -28,7 +28,7 @@ int main(){
 
 	if(listen(s_socket, 5) == -1) {
 			printf("listen Fail\n");
-			return -1;
+			return -1; 
     	}
 
    while(1){
