@@ -5,11 +5,12 @@
 
 #define PORT 9000
 #define IPADDR "127.0.0.1"
+#define BUFSIZE 10000
 
 int main(){
 	int c_socket;
 	struct sockaddr_in c_addr;
-	char rcvBuffer[100]; // 서버에서 보내준 문자열을 저장하기 위한 변수
+	char rcvBuffer[BUFSIZE]; // 서버에서 보내준 문자열을 저장하기 위한 변수
 	char wrBuffer[100];
 	int n;
 
@@ -33,14 +34,16 @@ int main(){
 
 		if(strncasecmp(wrBuffer, "quit", 4) == 0 || strncasecmp(wrBuffer, "kill server", strlen("kill server")) == 0)	 //대소문자 상관없이 비교
 			break;
-		printf("<%s> is sent.\n",wrBuffer);
 		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 		if(n < 0){
 			printf("[ERR] Cannot read\n");
 			return -1;
 		}
+
+		//printf("<%s> is sent.\n",wrBuffer);
 		rcvBuffer[n] = '\0';
 		printf("%s",rcvBuffer);
+		
 	}
 	close(c_socket);
 	return 0;

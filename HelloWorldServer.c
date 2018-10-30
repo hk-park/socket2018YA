@@ -5,12 +5,12 @@
 #include <string.h>
 
 #define PORT 9000
-#define BUFSIZE 100
+#define BUFSIZE 10000
 
 int main(){
 	int c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
-	char sendBuffer[100], rcvBuffer[100];
+	char sendBuffer[BUFSIZE], rcvBuffer[BUFSIZE];
 	int len, rcvLen;
 	char* token;
 
@@ -69,27 +69,28 @@ int main(){
 				else
 					sprintf(sendBuffer, "%s와 %s는 다른 문자열입니다.", str[1], str[2]);
 			}
-			else if(!strncasecmp(rcvBuffer, "readfile", strlen("readfile"))){
+			else if(!strncasecmp(rcvBuffer, "readfile", 8)){
 				char *token;
-				char *str[2];
+				char *file[2];
 				int i = 0;
 				token = strtok(rcvBuffer, " ");
 				while(token != NULL){
-					str[i++] = token;
+					file[i++] = token;
 					token = strtok(NULL, " ");
 				}
 				if(i<2)
 					sprintf(sendBuffer, "파일을 읽기 위해서는 readfile <파일명> 형태로 입력하세요.");
-				FILE *fp = fopen(str[1], "r");
+				FILE *fp = fopen(file[1], "r");
 				if(fp){
 					char tempBuffer[BUFSIZE];
+					memset(sendBuffer, 0, BUFSIZE);
 					while(fgets(tempBuffer, BUFSIZE, (FILE *)fp))
 						strcat(sendBuffer, tempBuffer);
 				fclose(fp);
 				} else 
 					sprintf(sendBuffer, "파일이 없습니다.\n");
 			}
-			else if(!strncasecmp(rcvBuffer, "exec",4)){
+			else if(!strncasecmp(rcvBuffer, "exec ",5)){
 				char *token;
 				char *command;
 				token = strtok(rcvBuffer, " ");
