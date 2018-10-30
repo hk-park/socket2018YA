@@ -5,13 +5,16 @@
 
 #define PORT 9000
 #define IPADDR "127.0.0.1"
+#define BUFSIZE 100
 
 int main(){
 	int c_socket;
 	struct sockaddr_in c_addr;
 	int n;
-	char rcvBuffer[100];
-	char sendBuffer[100];
+	int len;
+
+	char rcvBuffer[BUFSIZE];
+	char sendBuffer[BUFSIZE];
 	c_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&c_addr, 0, sizeof(c_addr));
@@ -24,8 +27,8 @@ int main(){
 		close(c_socket);
 		return -1;
 	}
-	//strcpy(sendBuffer, "Hi, I'm client\n");
 	while(1){
+		
 		fgets(sendBuffer, sizeof(sendBuffer), stdin);
 		sendBuffer[strlen(sendBuffer)-1] = '\0';
 		write(c_socket, sendBuffer, strlen(sendBuffer));
