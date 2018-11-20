@@ -2,20 +2,26 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+
 
 #define PORT 9000
 #define BUFSIZE 10000 
 
 char buffer[BUFSIZE] = "Hi, I'm server\n";
  
+void do_service(int c_socket);
+void sig_handler(int signo);
+
 main( )
 {
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
-	int   len;
-	int   n;
-	int rcvLen;
-	char rcvBuffer[BUFSIZE];
+	int pid;
+	int len;
+	signal(SIGCHLD, sig_handler);
+	
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -38,7 +44,30 @@ main( )
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		printf("Client is connected\n");
-		while(1){
+		
+		pid = fork();
+		
+		if(pid > 0){
+			close(c_socket);
+		}else if(pid==0){
+			close(c_socket);
+			do_service(c_socket);
+			exit(0);
+		}else{
+			printf("[ERROR] fork failed\n");
+			exit(0);
+		}		
+	}	
+	close(s_socket);
+}
+
+void do_service(int c_socket){
+
+	int n;
+	int rcvLen;	
+	char rcvBuffer[BUFSIZE];
+
+	while(1){
 			char *token;
 			char *str[3];
 			int i = 0;
@@ -105,9 +134,14 @@ main( )
 			n = strlen(buffer);
 			write(c_socket, buffer, n);
 		}
-		close(c_socket);
-		if(!strncasecmp(rcvBuffer, "kill server", 11))
-			break;
-	}	
-	close(s_socket);
+
+}
+
+void sig_handler(int signo){
+	int pid;
+	int status;
+	pid  = wait(&status); //자식 프로세스가 종료될 때까지 기다려주는 함수
+	printf("pid[%d] process terminated. status = %d\n", pid, status);
+
+
 }
