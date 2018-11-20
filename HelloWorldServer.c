@@ -3,11 +3,16 @@
 #include <sys/socket.h>
 #include <string.h>
 #define PORT 10000
+<<<<<<< HEAD
 #define BUFSIZE 10000
 char Hbuffer[BUFSIZE] = "안녕하세요. 만나서 반가워요\n";
 char Nbuffer[BUFSIZE] = "내 이름은 ㅁㅁㅁ이야.\n";
 char Abuffer[BUFSIZE] = "나는 ㅁㅁ살이야.\n";
 char nothing[BUFSIZE] = "XXXXXXXX \n";
+=======
+ 
+char buffer[100] = "Hi. I`m server.\n";
+>>>>>>> aff4d2d589d280b5bd74c2c684decb2df6755550
  
 main( )
 {
@@ -15,13 +20,21 @@ main( )
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
 	int   len;
+<<<<<<< HEAD
 	int   n, i, x;
 	int rcvLen;
 	char rcvBuffer[BUFSIZE], *ptr,  *ptr1, *ptr2, buffer[BUFSIZE], fbuffer[BUFSIZE];
+=======
+	int   n;
+	char rcvBuffer[100];
+	int rcvLen;
+	FILE *fp;
+
+
+>>>>>>> aff4d2d589d280b5bd74c2c684decb2df6755550
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
-	//s_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	s_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 	s_addr.sin_family = AF_INET;
 	s_addr.sin_port = htons(PORT);
@@ -39,10 +52,31 @@ main( )
 	while(1) {
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
+<<<<<<< HEAD
 		printf("Client is connected\n");
+=======
+>>>>>>> aff4d2d589d280b5bd74c2c684decb2df6755550
 		while(1){
+			printf("client is connected\n");
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
+			if(strncmp(rcvBuffer,"readfile",8)==0) {
+				char *token;
+				char *str[2];
+				int i=0;
+
+				token=strtok(rcvBuffer," ");			
+				while(token != NULL) {
+					str[i++]=token;
+					token=strtok(NULL, " ");							
+				}
+				fp=fopen(str[1],"r");
+				
+				printf("%s",str[1]);	
+				
+				fclose(fp);
+			}
 			rcvBuffer[rcvLen] = '\0';
+<<<<<<< HEAD
 			printf("[%s] received\n", rcvBuffer);
 			buffer[0] = '\0';
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
@@ -104,10 +138,12 @@ main( )
 				n = strlen(nothing);
 				write(c_socket, nothing, n);
 			}
+=======
+			printf("[%s] is received\n", rcvBuffer);
+			n = strlen(buffer);
+			write(c_socket, buffer, n);
+>>>>>>> aff4d2d589d280b5bd74c2c684decb2df6755550
 		}
-		close(c_socket);
-		if(!strncasecmp(rcvBuffer, "kill server", 11))
-			break;
 	}	
 	close(s_socket);
 }
