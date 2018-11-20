@@ -10,11 +10,11 @@ int main(){
 	pid = fork();
 
 	if(pid>0){
-		a = a+1;
+		a=a+1;
 		sleep(30);
 		printf("PARENT");
 	} else if(pid==0){
-		b = b+1;
+		b=b+1;
 		sleep(20);
 		printf("CHILD");
 	} else {
