@@ -10,6 +10,7 @@
 #define BUFSIZE 10000 
 
 char buffer[BUFSIZE] = "Hi, I'm server\n";
+int numClient = 0;
  
 void do_service(int c_socket);
 void sig_handler(int signo);
@@ -44,6 +45,9 @@ main( )
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		printf("Client is connected\n");
+
+		numClient++;
+		printf("현재 %d개의 클라이언트가 접속하였습니다.\n", numClient);
 		
 		pid = fork();
 		
@@ -142,6 +146,8 @@ void sig_handler(int signo){
 	int status;
 	pid  = wait(&status); //자식 프로세스가 종료될 때까지 기다려주는 함수
 	printf("pid[%d] process terminated. status = %d\n", pid, status);
-
+	
+	numClient--;
+	printf("1개의 클라이언트가 접속 종료되어 %d개의 클라이언트가 접속되어 있습니다.\n", numClient);
 
 }
