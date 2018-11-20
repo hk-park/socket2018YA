@@ -18,7 +18,7 @@
 
 /*	    FUNCs	    */
 
-//wrapper of strncasecmp
+//wrapper for strncasecmp
 //in_ source, in_ target
 int soc_msgcmp(char *source, char* target)
 {
