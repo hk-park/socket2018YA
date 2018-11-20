@@ -1,3 +1,6 @@
+
+
+
 #include <stdio.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -19,31 +22,38 @@ int main(){
 	c_addr.sin_family = AF_INET;
 	c_addr.sin_port = htons(PORT);
 	
+
+
 	if(connect(c_socket, (struct sockaddr *) &c_addr, sizeof(c_addr)) == -1){
 		printf("[ERR] Cannot connect\n");
 		close(c_socket);
 		return -1;
 	}
-	//strcpy(sendBuffer, "Hi, I'm client\n");
+
 	while(1){
+		printf("채팅 : ");
 		fgets(sendBuffer, sizeof(sendBuffer), stdin);
 		sendBuffer[strlen(sendBuffer)-1] = '\0';
 		write(c_socket, sendBuffer, strlen(sendBuffer));
 		if(strncasecmp(sendBuffer, "quit", 4) == 0 || strncasecmp(sendBuffer, "kill server", 11) == 0)
 			break;
+		
 		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
+
 		if(n < 0){
 			printf("[ERR] Cannot read\n");
 			return -1;
 		}
 		rcvBuffer[n] = '\0';
-		printf("received Data: %s\n", rcvBuffer);
-		// 3-2. 서버로부터 받은 문자열 길이 출력
-		printf("received data length: %d\n", n);
+		printf("%s",rcvBuffer);
+		
 	}	
-
-
 	close(c_socket);
 	return 0;
 
 }
+
+
+
+
+
