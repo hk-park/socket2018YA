@@ -16,7 +16,7 @@ main( )
 {
 	int c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
-	int len, check;
+	int len, check, pid;
 	int rcvLen;
 	char * command, *token;
 	char buffer[BUFSIZE];
