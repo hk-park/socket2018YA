@@ -2,19 +2,26 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h> 
+#include <signal.h>
+#include <sys/wait.h>
 #define PORT 9000
 #define BUFFERSIZE 100
 
+char rcvBuffer[100];
+char sendBuffer[100];
+int current = 0;
+
+void doService(int);
+void sig_handler(int);
+
 main()
 {
+	int pid;
+	int   len;
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
-	int   len;
-	int   n;
-	int rcvLen;
-	char rcvBuffer[100];
-	char sendBuffer[100];
 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
+	signal(SIGCHLD, sig_handler);
 
 	memset(&s_addr, 0, sizeof(s_addr));
 	//s_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -36,7 +43,25 @@ main()
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		//클라이언트가 접속할 경우
-		printf("클라이언트가 접속함\n");
+		printf("새 클라이언트가 접속함: %d개 접속중\n", ++current);
+		pid=fork();
+		if(pid > 0){
+			close(c_socket);
+			continue;
+		} else if(pid == 0){
+			close(s_socket);
+			doService(c_socket);
+			printf("클라이언트 종료됨: %d개 접속중\n", --current);
+			close(c_socket);
+			break;
+		}
+	}
+	close(s_socket);
+}
+
+void doService(int c_socket){
+		int   n;
+		int rcvLen;
 		while (1) {
 			// 스트링을 클라이언트에서 받고, 받은 스트링에 대해 \n 문자를 Null로 바꿔줌.
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
@@ -160,10 +185,12 @@ main()
 			write(c_socket, sendBuffer, n);
 			rcvBuffer[0] = '\0';
 		}
-		close(c_socket);
-		if ((!strncasecmp(rcvBuffer, "kill", 4))
-			|| (!strncasecmp(rcvBuffer, "quit", 4)))
-			break;
-	}
-	close(s_socket);
+}
+
+void sig_handler(int signo){
+	int pid;
+	int status;
+	pid = wait(&status);
+	//printf("pid[%d] terminated, status = %d\n", pid, status);
+	current--;
 }
