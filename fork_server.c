@@ -136,7 +136,7 @@ main( )
 		}
 
 		
-		printf("Client is connected\n");
+		
 		
 	}	
 	close(s_socket);
