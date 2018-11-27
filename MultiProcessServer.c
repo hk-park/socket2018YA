@@ -45,7 +45,7 @@
 			len = sizeof(c_addr);
 			c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 	        ClaNum++;
-		printf("Client is connected\n");
+		printf("Client is connected \n");
 		printf("현재 %d개의 클라이언트가 접속하였습니다.\n",ClaNum);
 	        pid = fork();
 	        if(pid > 0){
