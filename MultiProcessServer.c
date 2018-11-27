@@ -14,14 +14,15 @@
 void do_service(int c_socket);
 void sig_handler(int signo);
 
+int numClient = 0;
 char buffer[100] = "Hi, I'm server\n";
  
 main( )
 {
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
-	int   len;
-	int   pid;
+	int len, pid;
+
 	signal(SIGCHLD, sig_handler);
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
@@ -44,7 +45,9 @@ main( )
 	while(1) {
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-		printf("Client is Connected\n");
+		
+		printf("[%d] Client is connected !\n", ++numClient);
+			
 		if ((pid = fork()) > 0)
 		{	// 부모 프로세스
 			close(c_socket);
@@ -140,4 +143,5 @@ void sig_handler(int signo)
 	int status;
 	pid = wait(&status);	// 자식 프로세스가 종료될 때까지 기다려주는 함수
 	printf("pid[%d] process terminated.status = %d", pid, status);
+	printf("client is disconnected !, now is [%d] clients", --numClient);
 }
