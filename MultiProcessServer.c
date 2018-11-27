@@ -14,7 +14,8 @@ char Abuffer[BUFSIZE] = "나는 22살이야.\n";
 char nothing[BUFSIZE] = "XXXXXXXX \n";
 
 void do_service(int c_socket);
-void sig_handler();
+void sig_handler(int signo);
+int ClientNum=0;
 
 main( )
 {
@@ -22,6 +23,7 @@ main( )
 	struct sockaddr_in s_addr, c_addr;
 	int pid;
 	int len;
+	
 	signal(SIGCHLD, sig_handler);
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
@@ -45,7 +47,8 @@ main( )
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		printf("Client is connected\n");
-		
+		ClientNum++;
+		printf("현재 %d개의 클라이언트가 접속하였습니다.\n",ClientNum);
 		pid = fork();
 		if(pid > 0) { //부모 프로세스가 해야 할 일
 			close(c_socket); //부모 프로세스는 메세지를 주고 받을 일 없음
@@ -146,5 +149,8 @@ void sig_handler(int signo)
 	int status; //종료 상태 알아보기(정상, 비정상)
 	
 	pid = wait(&status); //자식 프로세스가 완전히 종료될 때까지 기다려주는 함수
-	printf("pid[%] process terminated status = %d\n", pid, status);
+	printf("pid[%d] process terminated status = %d\n", pid, status);
+	
+	ClientNum--;
+	printf("1개의 클라이언트가 접속되어 %d개의 클라이언트가 접속되어 있습니다.\n",ClientNum);
 }
