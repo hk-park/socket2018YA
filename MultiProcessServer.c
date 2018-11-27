@@ -3,19 +3,24 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 #define PORT 9000
 #define BUFSIZE 10000
 
 void do_service(int c_socket);
+void sig_handler();
 
-int c_socket, s_socket, pid;
-struct sockaddr_in s_addr, c_addr;
 char sendBuffer[BUFSIZE], rcvBuffer[BUFSIZE];
+int c_socket, s_socket;
+struct sockaddr_in s_addr, c_addr;
+int pid;
 int len, rcvLen;
 char *token;
 
 int main(){
+	signal(SIGCHLD, sig_handler);
   s_socket = socket(PF_INET, SOCK_STREAM, 0);
 
   memset(&s_addr, 0, sizeof(s_addr));
@@ -60,12 +65,12 @@ int main(){
 void do_service(int c_socket){
 	while(1){
 		rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
+		if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
+			break;
 		if(rcvLen < 0)
 				exit(0); //do_service()함수를 실행함. read()함수에서 클라이언트가 메시지를 보낼때까지 대기
 		rcvBuffer[rcvLen] = '\0';
 		
-		if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
-			break;
 		if(strncasecmp(rcvBuffer, "안녕하세요.", strlen("안녕하세요.")) == 0)
 			strcpy(sendBuffer, "안녕하세요. 만나서 반가워요.\n");
 		else if(strncasecmp(rcvBuffer, "이름이 머야?", strlen("이름이 머야?")) == 0)
@@ -128,10 +133,14 @@ void do_service(int c_socket){
 				sprintf(sendBuffer, "[%s] command failed\n",command);
 		}
 		write(c_socket, sendBuffer, strlen(sendBuffer));
-	
-		if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
-			break;
 	}
 	close(s_socket);
+}
+
+void sig_handler(int signo){
+	int pid;
+	int status;
+	pid = wait(&status);	//자식 프로세스가 종료될 때까지 기다려주는 함수
+	printf("pid[%d] process terminated. status = %d\n",pid, status);
 }
 
