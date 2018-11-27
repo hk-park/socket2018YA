@@ -16,6 +16,7 @@
 char buffer[100] = "Hi, I'm server\n";
 void sig_handler(int signo);
 void do_service(int c_socket);
+
 int	c_socket, s_socket;
 struct	sockaddr_in s_addr, c_addr;
 int	len;
@@ -23,6 +24,7 @@ int	rcvLen;
 int	rcvstrlen;
 char	rcvBuffer[100];
 int	n;
+int numClient=0;
 
 
 main( ) {
@@ -47,6 +49,9 @@ main( ) {
 	while(1) {
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
+		printf("Client is connected.\n");
+		numClient++;
+		printf("현재 %d개의 클라이언트가 접속하였습니다.\n", numClient);
 		pid = fork();
 		if(pid !=  0) {
 			close(c_socket);
@@ -75,7 +80,6 @@ void do_service(int c_socket){
 	int i=0;
 
 	while(1) {
-		printf("Client is connected\n");
 		while(1){
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 			rcvBuffer[rcvLen] = '\0';
@@ -125,6 +129,7 @@ void sig_handler(int signo) {
 	int status;
 	pid = wait(&status); //자식 프로세스가 종료될 때까지 기다려주는 함수
 	printf("pid[%d] process terminated. status = %d\n", pid, status);
-
-	
+	numClient--;
+	printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어 있습니다.\n", numClient);
 }
+
