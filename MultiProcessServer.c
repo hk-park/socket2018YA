@@ -26,8 +26,7 @@
 		s_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 		s_addr.sin_family = AF_INET;
 		s_addr.sin_port = htons(PORT);
-	 
-		if(bind(s_socket, (struct sockaddr *) &s_addr, sizeof(s_addr)) == -1) {
+			if(bind(s_socket, (struct sockaddr *) &s_addr, sizeof(s_addr)) == -1) {
 			printf("Can not Bind\n");
 			return -1;
 		}
@@ -40,7 +39,6 @@
 		while(1) {
 			len = sizeof(c_addr);
 			c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-	        //3-3.클라이언트가 접속했을 때 "Client is connected" 출력
 	        printf("Client is connected\n");
 	        pid = fork();
 	        if(pid > 0){
@@ -51,6 +49,10 @@
 	            do_service(c_socket);
 	            exit(0);
 	        }
+		 else{
+			printf("[ERROR] fork failed\n");
+			exit(0);
+			}
 		}	
 		close(s_socket);
 	}
