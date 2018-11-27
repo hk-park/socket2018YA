@@ -3,6 +3,8 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 // 2-1. 서버 프로그램이 사용하는 포트를 9000 --> 10000으로 수정 
 #define PORT 9000
@@ -13,6 +15,8 @@
 char buffer[BUFSIZE] = "Hi, I'm server\n";
  
 void do_service(int c_socket);
+void sig_handler(int signo);
+int count=0;
 
 main( )
 {
@@ -20,6 +24,7 @@ main( )
 	struct sockaddr_in s_addr, c_addr;
 	int pid;
 	int   len;
+	signal(SIGCHLD,sig_handler);
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -43,6 +48,7 @@ main( )
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
 		printf("Client is connected\n");
+		printf("현재 %d개의 클라이언트가 접속하였습니다.\n",++count);
 		pid = fork();
 		if(pid > 0){ //부모 프로세스
 			close(c_socket);
@@ -56,6 +62,14 @@ main( )
 		}
 	}	
 	close(s_socket);
+}
+
+void sig_handler(int signo) {
+	int pid;
+	int status;
+	pid=wait(&status);
+	printf("pid[%d] process terminated status = %d\n", pid, status);
+	printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어있습니다.\n",--count);
 }
 
 void do_service(int c_socket){

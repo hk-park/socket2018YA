@@ -3,15 +3,15 @@
 #include <sys/socket.h>
 #include <string.h>
 
-#define PORT 10000
+#define PORT 9000
 #define IPADDR "127.0.0.1"
-#define BUFSIZE 10000
+
 int main(){
 	int c_socket;
 	struct sockaddr_in c_addr;
 	int n;
-	char rcvBuffer[BUFSIZE];
-	char sendBuffer[BUFSIZE];
+	char rcvBuffer[100];
+	char sendBuffer[100];
 	c_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&c_addr, 0, sizeof(c_addr));
@@ -24,23 +24,17 @@ int main(){
 		close(c_socket);
 		return -1;
 	}
-	//strcpy(sendBuffer, "Hi i'm clinet\n");
-	while(1){
+	while(1) {
 		fgets(sendBuffer, sizeof(sendBuffer), stdin);
-		if(strncmp(sendBuffer, "quit", 4)==0){
-			break;
-		}
-		write(c_socket, sendBuffer, sizeof(sendBuffer));
-
+		sendBuffer[strlen(sendBuffer)-1] = '\0';
+		write(c_socket, sendBuffer, strlen(sendBuffer));
 		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
-		if(n < 0){
-			printf("[ERR] Cannot read\n");
-			return -1;
-		}
 		rcvBuffer[n] = '\0';
 		printf("received Data: %s\n", rcvBuffer);
+		// 3-2. 서버로부터 받은 문자열 길이 출력
+		printf("received data length: %d\n", n);
 	}
-	close(c_socket);
-	return 0;
+		close(c_socket);
+		return 0;
 
 }
