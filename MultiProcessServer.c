@@ -3,10 +3,24 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <sys/wait.h>
 #define IP "127.0.0.1"
 #define PORT 10000
 
+
+int numClient = 0;
 void doService(int c_socket);
+void sig_handler(int signo);
+
+void sig_handler(int signo){
+	int pid;
+	int status;
+	pid = wait(&status);//자식 프로세스가 종료될 때까지 기다려주는 함수
+	printf("pid[%d] process terminated.status = %d\n", pid, status);
+	numClient--;
+	printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어 있습니다.\n", numClient);
+}
 
 int main(void){
 	int s_socket, c_socket;
@@ -39,8 +53,8 @@ int main(void){
 		pid = fork();
 		if(pid>0){
 			close(c_socket);
-			//stat++;
-			//printf("현재 %d개의 클라이언트가 접속 중입니다.\n", stat);
+			stat++;
+			printf("현재 %d개의 클라이언트가 접속 중입니다.\n", stat);
 			continue;
 		}
 		else if(pid==0){
