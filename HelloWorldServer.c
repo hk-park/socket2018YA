@@ -9,7 +9,7 @@
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 //char buffer[100] = "hello, world\n";
 char buffer[100] = "Hi, I'm server\n";
- 
+ void do_service();
 main( )
 {
 	int   c_socket, s_socket;
@@ -41,7 +41,28 @@ main( )
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
 		printf("Client is connected\n");
-		while(1){
+		pid=fork();
+		if(pid>0){//부모프로세스
+			clos(c_socket);
+		}else if(pid==0){//자식 프로세스
+			close(s_socket);
+			do_servise(c_socket);
+		}else{
+		printf("[ERROR]fork failed\n");
+		exit(0);
+		}
+		
+		if(!strncasecmp(rcvBuffer, "kill server", 11))
+			break;
+	}	
+	close(s_socket);
+}
+
+void do_service(int c_socket){
+while(1){
+		char *token;
+		char *strLen;
+		int i=0;
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 			rcvBuffer[rcvLen] = '\0';
 			printf("[%s] received\n", rcvBuffer);
@@ -51,8 +72,4 @@ main( )
 			write(c_socket, buffer, n);
 		}
 		close(c_socket);
-		if(!strncasecmp(rcvBuffer, "kill server", 11))
-			break;
-	}	
-	close(s_socket);
 }

@@ -5,7 +5,7 @@
   #define PORT 9000 
     
   char buffer[BUFSIZ] = "Hi, I'm server\n"; 
-    
+   void do_service();
   main( ) 
   { 
   	int   c_socket, s_socket; 
@@ -35,7 +35,23 @@
   		len = sizeof(c_addr); 
   		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len); 
   		printf("Client is connected\n"); 
-  		while(1){ 
+  		pid=fork();
+		if(pid>0){//부모프로세스
+			clos(c_socket);
+		}else if(pid==0){//자식 프로세스
+			close(s_socket);
+			do_servise(c_socket);
+		}else{
+		printf("[ERROR]fork failed\n");
+		exit(0);
+		}
+  		if(!strncasecmp(rcvBuffer, "kill server", 11)) 
+  			break; 
+  	}	 
+  	close(s_socket); 
+ } 
+void do_service(int c_socket){
+while(1){ 
   			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer)); 
   			rcvBuffer[rcvLen] = '\0'; 
   			printf("[%s] received\n", rcvBuffer); 
@@ -80,9 +96,4 @@
   
 
   		close(c_socket); 
-  		if(!strncasecmp(rcvBuffer, "kill server", 11)) 
-  			break; 
-  	}	 
-  	close(s_socket); 
- } 
-
+}
