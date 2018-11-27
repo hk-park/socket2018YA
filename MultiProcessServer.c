@@ -79,7 +79,7 @@ void do_service(int c_socket){
 		else if(!strncmp(rcvBuffer, "이름이 머야?", strlen("이름이 뭐야?")))
 			strcpy(buffer, "내 이름은 신환야.");
 		else if(!strncmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?")))
-			strcpy(buffer, "나는 30살이야.");
+			strcpy(buffer, "나는 23살이야.");
 		else if(!strncasecmp(rcvBuffer, "strlen ", 7))
 			sprintf(buffer, "이 문자열의 길이는 %d입니다.", strlen(rcvBuffer)-7);
 		else if(!strncasecmp(rcvBuffer, "strcmp ", 7)){
@@ -128,7 +128,7 @@ void do_service(int c_socket){
 			else
 				sprintf(buffer, "[%s] 명령어가 성공하였습니다.", command);		
 		}else
-			 strcpy(buffer, "무슨 말인지 모르겠습니다.");
+			 strcpy(buffer, "등록되지 않은 명령 입니다..");
 		n = strlen(buffer);
 		write(c_socket, buffer, n);
 	}
