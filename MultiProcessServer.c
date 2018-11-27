@@ -2,19 +2,28 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
+#include<signal.h>
+#include<sys/wait.h>
+#include<errno.h>
+
 #define PORT 9000
- 
-char buffer[BUFSIZ] = "Hi, I'm server\n";
+
+int count=0;
+char buffer[BUFSIZ] = "";
+
+void do_service(int c_sokect);
+void sig_handler(int signo);
  
 main( )
 {
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
 	int   len;
-
 	char buffer[BUFSIZ];
 
 	int pid;
+
+	signal(SIGCHLD, sig_handler);
 
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
@@ -37,8 +46,11 @@ main( )
 	while(1) {
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-		printf("Client is connected\n");
+		printf("Client is connected\n");		
 		
+		count++;
+		printf("현재 %d개의 클라이언트가 접속하였습니다.\n", count);
+
 		pid = fork();
 
 		if(pid > 0){
@@ -54,7 +66,7 @@ main( )
 	}	
 }
 
-do_service(int c_socket){
+void do_service(int c_socket){
 	int   n;
 	int rcvLen;
 	char rcvBuffer[BUFSIZ];
@@ -68,10 +80,9 @@ do_service(int c_socket){
 	while(1){
 		rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 		rcvBuffer[rcvLen] = '\0';
-		printf("[%s] received\n", rcvBuffer);
+		printf("Received Data From Client: %s\n", rcvBuffer);
 	
-		if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
-			break;
+		if(strncasecmp(rcvBuffer, "quit", 4) == 0)	break;
 		
 		if(strncmp(rcvBuffer, "안녕하세요", strlen("안녕하세요")) == 0){
 			strcpy(buffer, "안녕하세요. 만나서 반가워요.");
@@ -138,4 +149,15 @@ do_service(int c_socket){
 		write(c_socket, buffer, strlen(buffer));
 		memset(buffer, 0, sizeof(buffer));
 	}
+}
+
+void sig_handler(int signo){
+	int pid;
+	int status;
+
+	pid = wait(&status);
+	count--;
+
+	printf("pid[%d] terminated, status=%d\n", pid, status);
+	printf("1개의 클라이언트가 접속 종료되어 %d개의 클라이언트가 접속되어 있습니다.\n", count);			
 }
