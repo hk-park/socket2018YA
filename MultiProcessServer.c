@@ -2,19 +2,25 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 #define IP "127.0.0.1"
 #define PORT 10000
 
 void doService(int c_socket);
+void sigHandler(int signo);
+
+int stat = 0;
 
 int main(void){
 	int s_socket, c_socket;
 	struct sockaddr_in s_addr, c_addr;
 	int len;
 	int pid;
-	int stat=0;
+	int fd[2];
 
+	signal(SIGCHLD, sigHandler);
 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -24,6 +30,11 @@ int main(void){
 
 	if(bind(s_socket, (struct sockaddr *) &s_addr, sizeof(s_addr)) == -1){
 		printf("[ERROR] Cannot bind.\n");
+		return -1;
+	}
+
+	if(pipe(fd) < 0){
+		printf("[ERROR] Pipe creation failed.\n");
 		return -1;
 	}
 
@@ -38,17 +49,15 @@ int main(void){
 
 		pid = fork();
 		if(pid>0){
+			stat++;
 			close(c_socket);
-			//stat++;
-			//printf("현재 %d개의 클라이언트가 접속 중입니다.\n", stat);
+			printf("== Client is connected. [접속중인 클라이언트 : %d개]\n", stat);
 			continue;
 		}
 		else if(pid==0){
 			close(s_socket);
 			doService(c_socket);
 			exit(0);
-			if(stat==-1)
-				break;
 		}
 	}
 	close(s_socket);
@@ -66,7 +75,6 @@ void doService(int c_socket){
 	char *tmptoken;
 	FILE* fp;
 
-	printf("==== Client is connected. ====\n");
 	strcpy(buffer, "==== Server is connected. ====\n");
 	write(c_socket, buffer, strlen(buffer));
 
@@ -128,7 +136,7 @@ void doService(int c_socket){
 				}
 			}
 
-			else if(strncasecmp(rcvbuf, "exac", 4)==0){
+			else if(strncasecmp(rcvbuf, "exec", 4)==0){
 				strtok(rcvbuf, " ");
 				strcpy(tmpbuf1, "\0");
 				while(1){
@@ -152,4 +160,15 @@ void doService(int c_socket){
 		}
 	}
 	close(c_socket);
+}
+
+void sigHandler(int signo){
+	int pid;
+	int status;
+	pid = wait(&status); // 자식 프로세스 종료까지 대기
+	stat--;
+	//printf("pid[%d] process terminated. status = %d\n", pid, status);
+	//printf("1개의 클라이언트 접속이 종료되어 현재 %d개의 클라이언트가 접속 중입니다.\n", stat);
+	if(pid!=-1)
+		printf("PID[%d] 클라이언트가 접속을 종료하여 현재 접속중인 클라이언트는 %d개입니다.\n", pid, stat);
 }
