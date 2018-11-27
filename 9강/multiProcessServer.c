@@ -79,8 +79,17 @@ void sig_handler(int signum)
     int pid;
     int status;
     pid=wait(&status);
-    printf("pid [%d] process terminated. status = %d\n",pid,status);
-    printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어 있습니다.\n",--g_clientCnt);
+    
+    //status가 -1이면 system 함수에 의해서 생성된 자식 프로세스가 종료되었다는 의미이다.
+    //우리가 원하는 것은 system 함수에 의해서 발생된 SIGCHLD가 아니라 accept 함수를 통해서
+    //생성된 자식 프로세스의 SIGCHLD이다. status 값이 -1이 아닐때에만 처리하면 어느정도
+    //예외처리는 될것같다.
+
+    if( status != -1)
+    {
+	printf("pid [%d] process terminated. status = %d\n",pid,status);
+	printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어 있습니다.\n",--g_clientCnt);
+    }
 }
 
 void do_service(int c_socket)
@@ -212,8 +221,13 @@ void do_service(int c_socket)
 	else
 	{
 	    //echo every msg
-	    puts("hello");
-	    soc_write(c_socket,rcvBuffer);
+	    //여태까지 내가 만든 서버는 클라이언트가 보낸 메세지를 그대로 답변해주는 에코
+	    //시스템이였다. 그러나 클라이언트가 ctrl+c로 종료하게되면 문제가 발상한다.
+	    //클라이언트가 ctrl+c로 종료하면 서버한태 ctrl+c를 보내는거같은데
+	    //이것을 서버가 클라이언트한태 에코해주면 무슨 이유때문인지 서버 프로그램이 무한
+	    //루프에 빠지게된다. 서버에서 따로 ctrl+c를 처리하거나 클라이언트에서
+	    //처리하는게 좋겠지만,다른 해결책이 떠오르기전까지는 일단 에코 시스템은 일시중단한다.
+	    soc_write(c_socket,"무슨 말인지 모르겠습니다.");
 	}
 
     }

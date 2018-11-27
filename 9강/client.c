@@ -70,8 +70,6 @@ int  main()
 	    break;
 	}
     }
-    puts("hi");
     close(c_socket);
-    puts("hi2");
     return 0;
 }

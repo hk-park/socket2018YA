@@ -168,10 +168,10 @@ void soc_freeCharPtr(char** ppStr)
     *ppStr=NULL;
 }
 
-//in_ socket,in_ msg
-void soc_write(int socket,char *msg)
+//in_ fd,in_ msg
+void soc_write(int fd,char *msg)
 {
-    write(socket,msg,strlen(msg));
+    write(fd,msg,strlen(msg));
 }
 
 
