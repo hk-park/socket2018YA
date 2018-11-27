@@ -2,22 +2,23 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
-#define PORT 10000
+#include <stdlib.h> //exit위해 
+
+#define PORT 9000
 #define BUFSIZE 10000
 char Hbuffer[BUFSIZE] = "안녕하세요. 만나서 반가워요\n";
 char Nbuffer[BUFSIZE] = "내 이름은 지윤이야.\n";
 char Abuffer[BUFSIZE] = "나는 22살이야.\n";
 char nothing[BUFSIZE] = "XXXXXXXX \n";
- 
+
+void do_service(int c_socket);
+
 main( )
 {
-	FILE *fp;
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
-	int   len;
-	int   n, i, x;
-	int rcvLen;
-	char rcvBuffer[BUFSIZE], *ptr,  *ptr1, *ptr2, buffer[BUFSIZE], fbuffer[BUFSIZE];
+	int pid;
+	int len;
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -40,7 +41,35 @@ main( )
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		printf("Client is connected\n");
-		while(1){
+		
+		pid = fork();
+		if(pid > 0) { //부모 프로세스가 해야 할 일
+			close(c_socket); //부모 프로세스는 메세지를 주고 받을 일 없음
+		} else if (pid == 0) { //자식 프로세스가 해야 할 일
+			close(s_socket);
+			do_service(c_socket);
+			exit(0);
+		} else { //실패
+			printf("[ERROR] fork failed\n");
+			exit(0);
+		}
+		close(c_socket);
+	}	
+	close(s_socket);
+}
+
+void do_service(int c_socket) {
+	//클라이언트의 요청 처리 루틴
+	FILE *fp;
+	int i, x;
+	char  *ptr,  *ptr1, *ptr2, buffer[BUFSIZE], fbuffer[BUFSIZE];
+	int   n;
+	int rcvLen;
+	char rcvBuffer[BUFSIZE];
+	while(1){
+			char *token;
+			char *str[3];
+			int i = 0;
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 			rcvBuffer[rcvLen] = '\0';
 			printf("[%s] received\n", rcvBuffer);
@@ -104,30 +133,5 @@ main( )
 				n = strlen(nothing);
 				write(c_socket, nothing, n);
 			}
-
-			if((pid = fork()) > 0) {
-				//다른 클라이언트의 요청 접수
-				close(c_socket);
-				continue;			
-			} else if (pid == 0) {
-				//클라이언트의 요청 처리
-				close(s_socket);
-				do_service(c_socket);
-				exit(0);			
-			}
 		}
-		close(c_socket);
-		if(!strncasecmp(rcvBuffer, "kill server", 11))
-			break;
-	}	
-	close(s_socket);
-}
-
-do_service(int c_socket) {
-	//클라이언트의 요청 처리 루틴
-	while(1) {
-		if(readSize = read(c_socket, rcvBuffer, sizeof(rcvBuffer)) {
-			
-		}
-	}
 }
