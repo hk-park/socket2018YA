@@ -27,7 +27,7 @@ char str[3][BUFSIZE];
 char command[BUFSIZE];
 FILE *fp;
 char fileBuffer[BUFSIZE];
-
+int cnum=0;
 void sig_handler();
 
 main( )
@@ -53,8 +53,8 @@ main( )
 	while(1) {
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-			
-		printf("Client is connected\n");
+		cnum++;
+		printf("%d Client is connected\n", cnum);
 		if(pid = fork()>0){
 				close(c_socket);
 				continue;
@@ -148,4 +148,5 @@ void sig_handler(){
 	int status;
 	pid = wait(&status);
 	printf("PID[%d] process terminated.status = %d\n", pid ,status);
+	printf("총 %d개의 클라이언트와 연결중...\n", --cnum);
 }
