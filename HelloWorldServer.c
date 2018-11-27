@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h> 
@@ -51,9 +52,11 @@ main()
 		} else if(pid == 0){
 			close(s_socket);
 			doService(c_socket);
-			printf("클라이언트 종료됨: %d개 접속중\n", --current);
 			close(c_socket);
 			break;
+		} else {
+			printf("[Error]: fork failed\n");
+			exit(0);
 		}
 	}
 	close(s_socket);
@@ -193,4 +196,5 @@ void sig_handler(int signo){
 	pid = wait(&status);
 	//printf("pid[%d] terminated, status = %d\n", pid, status);
 	current--;
+	printf("클라이언트 종료됨: %d개 접속중\n", current);
 }
