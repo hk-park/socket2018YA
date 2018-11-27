@@ -49,6 +49,11 @@ int main(){
 			do_service(c_socket);
 			exit(0);
 		}
+		else
+		{
+			printf("[ERROR] fork failed\n");
+			exit(0);
+		}
 	}
 }
 
