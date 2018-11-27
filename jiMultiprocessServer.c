@@ -2,13 +2,19 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <signal.h>
+#include <sys/wait.h>
+
 // 2-1. 서버 프로그램이 사용하는 포트를 9000 --> 10000으로 수정 
 #define PORT 9000
 //#define PORT 10000
  
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 //char buffer[100] = "hello, world\n";
-char buffer[100] = "ㅇㅇㅇ"; 
+char buffer[100] = "ㅇㅇㅇ";
+int c=0; 
+void sig_handler(int signo);
+void do_service(int c_socket);
 main( )
 {
 	int pid;
@@ -17,6 +23,7 @@ main( )
 	struct sockaddr_in s_addr, c_addr;
 	int   len;
 	int   n;
+	signal (SIGCHLD, sig_handler);
  	
 
 	s_socket = socket(PF_INET, SOCK_STREAM, 0); //소켓을 생성
@@ -42,6 +49,8 @@ main( )
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);//연결 요청을 수신
 		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
 		printf("Client is connected\n");
+		c++;
+		printf("현재 %d개의 클라이언트가 접속하였습니다.\n", c);
 		pid=fork();
 			
 		if(pid>0) { //부모프로세스
@@ -53,6 +62,9 @@ main( )
 			close(s_socket);
 			do_service(c_socket);
 			exit(0);
+		} else {
+			printf("[ERROR] fork failed\n");
+			exit(0);
 		}
 	
 	}
@@ -60,7 +72,7 @@ main( )
 		
 }
 
-do_service(int c_socket){ 
+void do_service(int c_socket){ 
 	int rcvLen;
 	char rcvBuffer[100], *ptr1, *ptr2;
 	int len, n;
@@ -120,4 +132,13 @@ do_service(int c_socket){
 		
 
 	}
+}
+
+void sig_handler(int signo) {
+	int pid;
+	int status;
+	pid = wait(&status); //자식 프로세스가 종료될 때까지 기다려주는 함수
+	printf("pid[%d] process terminated status = %d\n", pid, status);
+	c--;
+	printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어 있습니다.\n", c);
 }
