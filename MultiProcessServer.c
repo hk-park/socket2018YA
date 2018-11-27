@@ -160,6 +160,9 @@ void doService(int c_socket){
 		}
 	}
 	close(c_socket);
+	if(strncmp(rcvbuf, "kill server", 11)==0){
+		//파이프 보내기
+	}
 }
 
 void sigHandler(int signo){
