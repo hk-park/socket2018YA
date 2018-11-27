@@ -3,6 +3,8 @@
 	#include <sys/socket.h>
 	#include <string.h>
 	#include <stdlib.h>
+	#include <signal.h>
+	#include<sys/wait.h>
 	
 	// 2-1. 서버 프로그램이 사용하는 포트를 9000 --> 10000으로 수정 
 	#define PORT 9000
@@ -13,13 +15,15 @@
 	char buffer[BUFSIZE] = "Hi, I'm server\n";
 	 
 	void do_service(int c_socket);
+	void sig_handler();
 	main( )
 	{
 		int pid;
 		int   c_socket, s_socket;
 		struct sockaddr_in s_addr, c_addr;
 		int   len;
-	 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
+	 	signal(SIGCHLD, sig_handler);
+		s_socket = socket(PF_INET, SOCK_STREAM, 0);
 		
 		memset(&s_addr, 0, sizeof(s_addr));
 		//s_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -135,3 +139,10 @@
 		}
 		close(c_socket);
 	}
+void sig_handler(int signo){
+	int pid;
+	int status;
+	pid = wait(&status);
+	printf("pid[%d] process terminated. tatus=%d\n",pid,status);
+}
+
