@@ -16,6 +16,7 @@
 
 char buffer[BUFSIZE] = "Hi, I'm server\n";
 char rcvBuffer[BUFSIZE];
+int numClient = 0;
 
 void function (int c_socket);
 void sig_handler(int signo);
@@ -49,6 +50,8 @@ main( )
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
 		printf("Client is connected\n");
+		numClient++;
+		printf("현재 %d개의 클라이언트가 접속하였습니다.\n",numClient);
 		pid = fork();
 		//부모인 경우
 		if(pid>0){
@@ -103,4 +106,6 @@ void sig_handler(int signo){
 	int status;
 	pid = wait(&status);
 	printf("pid[%d] process terminated.status = %d\n", pid, status);
+	numClient--;
+	printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어 있습니다.\n", numClient);
 }
