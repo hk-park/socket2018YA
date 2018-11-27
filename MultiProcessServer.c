@@ -20,16 +20,12 @@ char str2[BUFSIZE];
 FILE *fp;
 char buff[255];
 char rcvBuffer[BUFSIZE];
-
+int pid;
 main( )
 {
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
 	int   len;
-	int   n;
-	int rcvLen;
-	int readsize;
-	char rcvBuffer[100];
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -53,43 +49,66 @@ main( )
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
 		printf("Client is connected\n");
-		while(1){
-			memset(rcvBuffer,0,BUFSIZE);
-			if(readsize=read (c_socket, rcvBuffer,sizeof (rcvBuffer))<0){
-				return -1;
-			}
-			printf("Received Data From Client: %s\n",rcvBuffer);
-			if(strcasecmp(rcvBuffer,"quit")==0){
-				break;
-			}
-			else if(strcasecmp(rcvBuffer,"안녕하세요")==0){
-				strcpy(buffer,"안녕하세요 만나서 반가워요");
-			}
-			else if(strcasecmp(rcvBuffer,"이름이 머야?")==0){
+		pid = fork();
+		if(pid>0)}{
+			close(c_socket);
+			continue;
+		}
+		else if(pid= 0){
+			close(s_socket);
+			do_service(c_socket);
+			exit(0);
+		}
+		else
+		{
+			printf("fork is fall\n");
+			exit(0);
+		}
+	}	
+}
+void do_service(int c_socket){
+        int   n;
+        int rcvLen;
+        int readsize;
+        char rcvBuffer[100];
+
+while(1){
+                      memset(rcvBuffer,0,BUFSIZE);
+                        if(readsize=read (c_socket, rcvBuffer,sizeof (rcvBuffer))<0){
+                                return -1;
+                        }
+                        printf("Received Data From Client: %s\n",rcvBuffer);
+                        if(strcasecmp(rcvBuffer,"quit")==0){
+                                break;
+                        }
+                        else if(strcasecmp(rcvBuffer,"안녕하세요")==0){
+                                strcpy(buffer,"안녕하세요 만나서 반가워요");
+                        }
+                        else if(strcasecmp(rcvBuffer,"이름이 머야?")==0){
                                 strcpy(buffer,"내 이름은 홍용호야");
                         }
-			else if(strcasecmp(rcvBuffer,"몇 살이야?")==0){
+                        else if(strcasecmp(rcvBuffer,"몇 살이야?")==0){
                                strcpy(buffer,"나는 23살이야");
                         }
+
 			else if(strncasecmp(rcvBuffer,"strlen",6)==0){
-				token=strtok(rcvBuffer," ");
-				token=strtok(NULL," ");
-				strcpy(buffer2,token);
-				sprintf(buffer,"%s, len : %d",buffer2,strlen(buffer2));
-			}
-			else if(strncasecmp(rcvBuffer, "strcmp",6)==0){
-				token=strtok(rcvBuffer," ");
-				strcpy(str1, strtok(NULL," "));
-				strcpy(str2, strtok(NULL," "));
-				if(strcmp(str1,str2)==0)
-					sprintf(buffer,"0",str1,str2);
-				else
-					sprintf(buffer,"different",str1,str2);
-			}
-			n = strlen(buffer);
-			write(c_socket,buffer,n);
-		}
-		close(c_socket);
-	}	
-	close(s_socket);
+                                token=strtok(rcvBuffer," ");
+                                token=strtok(NULL," ");
+                                strcpy(buffer2,token);
+                                sprintf(buffer,"%s, len : %d",buffer2,strlen(buffer2));
+                        }
+                        else if(strncasecmp(rcvBuffer, "strcmp",6)==0){
+                                token=strtok(rcvBuffer," ");
+                                strcpy(str1, strtok(NULL," "));
+                                strcpy(str2, strtok(NULL," "));
+                                if(strcmp(str1,str2)==0)
+                                        sprintf(buffer,"0",str1,str2);
+                                else
+                                        sprintf(buffer,"different",str1,str2);
+                        }
+                        n = strlen(buffer);
+                        write(c_socket,buffer,n);
+                }
+                close(c_socket);
+        close(s_socket);
 }
