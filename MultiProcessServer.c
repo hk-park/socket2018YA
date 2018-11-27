@@ -1,5 +1,5 @@
 #include <stdio.h>
- #include <netinet/in.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
 #include <stdlib.h>
@@ -8,7 +8,7 @@
 // 2-1. 서버 프로그램이 사용하는 포트를 9000 --> 10000으로 수정 
 #define PORT 9000
  //#define PORT 10000
- #define BUFSIZE 10000 
+#define BUFSIZE 10000 
  // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
  //char buffer[BUFSIZE] = "hello, world\n";
 char buffer[BUFSIZE] = "Hi, I'm server\n";
@@ -76,9 +76,9 @@ main( )
  		else if(!strncmp(rcvBuffer, "안녕하세요", strlen("안녕하세요")))
  			strcpy(buffer, "안녕하세요. 만나서 반가워요.");
  		else if(!strncmp(rcvBuffer, "이름이 머야?", strlen("이름이 머야?")))
- 			strcpy(buffer, "내 이름은 박홍규야.");
+ 			strcpy(buffer, "내 이름은 JeongHoon 야.");
  		else if(!strncmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?")))
- 			strcpy(buffer, "나는 30살이야.");
+ 			strcpy(buffer, "나는 24살이야.");
  		else if(!strncasecmp(rcvBuffer, "strlen ", 7))
  			sprintf(buffer, "내 문자열의 길이는 %d입니다.", strlen(rcvBuffer)-7);
  		else if(!strncasecmp(rcvBuffer, "strcmp ", 7)){
