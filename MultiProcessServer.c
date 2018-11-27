@@ -17,6 +17,7 @@ int c_socket, s_socket;
 struct sockaddr_in s_addr, c_addr;
 int pid;
 int len, rcvLen;
+int client_count = 0;
 char *token;
 
 int main(){
@@ -45,6 +46,7 @@ int main(){
 		if(pid > 0){ //부모 프로세스
 			//다른 클라이언트의 요청 접수
 			printf("Clinet is connected\n");
+			printf("현재 %d개의 클라이언트가 접속하였습니다.\n",++client_count);
 			close(c_socket);
 			continue;
 		}
@@ -65,6 +67,7 @@ int main(){
 void do_service(int c_socket){
 	while(1){
 		rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
+		printf("Received Data From Client : %s\n", rcvBuffer);
 		if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 			break;
 		if(rcvLen < 0)
@@ -142,5 +145,6 @@ void sig_handler(int signo){
 	int status;
 	pid = wait(&status);	//자식 프로세스가 종료될 때까지 기다려주는 함수
 	printf("pid[%d] process terminated. status = %d\n",pid, status);
+	printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어 있습니다.\n", --client_count);
 }
 
