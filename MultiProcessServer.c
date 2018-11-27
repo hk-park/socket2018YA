@@ -3,6 +3,8 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <stdlib.h> //exit위해 
+#include <signal.h> //signal
+#include <sys/wait.h> //wait 함수
 
 #define PORT 9000
 #define BUFSIZE 10000
@@ -12,6 +14,7 @@ char Abuffer[BUFSIZE] = "나는 22살이야.\n";
 char nothing[BUFSIZE] = "XXXXXXXX \n";
 
 void do_service(int c_socket);
+void sig_handler();
 
 main( )
 {
@@ -19,6 +22,7 @@ main( )
 	struct sockaddr_in s_addr, c_addr;
 	int pid;
 	int len;
+	signal(SIGCHLD, sig_handler);
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -134,4 +138,13 @@ void do_service(int c_socket) {
 				write(c_socket, nothing, n);
 			}
 		}
+}
+
+void sig_handler(int signo)
+{
+	int pid;
+	int status; //종료 상태 알아보기(정상, 비정상)
+	
+	pid = wait(&status); //자식 프로세스가 완전히 종료될 때까지 기다려주는 함수
+	printf("pid[%] process terminated status = %d\n", pid, status);
 }
