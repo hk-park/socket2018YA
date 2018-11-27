@@ -3,17 +3,21 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include <signal.h>
+#include <sys/wait.h>
 #define PORT 9000
  
 char buffer[BUFSIZ] = "Hi, I'm server\n";
 void do_service(int c_socket); 
+void sig_handler();
+int count=0;
 main( )
 {
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
 	int pid;
 	int   len;
+	signal(SIGCHLD, sig_handler);
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -35,6 +39,8 @@ main( )
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		printf("Client is connected\n");
+		++count;
+		printf("접속한 클라이언트 수: %d\n", count);
 		pid=fork();
 		if(pid>0){//부모프로세스
 			close(c_socket);
@@ -92,4 +98,11 @@ while(1){
 
 			write(c_socket, buffer, strlen(buffer));
 		}
+}
+void sig_handler(){
+	int pid;
+	int status;
+	pid=wait(&status);
+	printf("client가 종료되어 남아있는 client수: %d\n",--count);
+	printf("pid[%d] process terminated status = %d\n",pid, status);
 }
