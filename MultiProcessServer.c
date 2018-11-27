@@ -3,6 +3,8 @@
 #include <sys/socket.h>
 #include <string.h>
 #include<stdlib.h>
+#include<signal.h>
+#include<sys/wait.h>
 
 #define PORT 9000
 #define BUFSIZE 100
@@ -26,9 +28,11 @@ char command[BUFSIZE];
 FILE *fp;
 char fileBuffer[BUFSIZE];
 
-main( )
-{	
+void sig_handler();
 
+main( )
+{
+	signal(SIGCHLD, sig_handler);	
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -61,6 +65,9 @@ main( )
 				do_service(c_socket);
 				exit(0);
 			}
+		}
+		else {
+			printf("error!!");
 		}
 		close(c_socket);
 		if(!strncasecmp(rcvBuffer, "kill server", 11))
@@ -134,4 +141,11 @@ void do_service(int c_socket){
 	               n = strlen(buffer);
 	               write(c_socket, buffer, n);
 	}
+}
+
+void sig_handler(){
+	int pid;
+	int status;
+	pid = wait(&status);
+	printf("PID[%d] process terminated.status = %d\n", pid ,status);
 }
