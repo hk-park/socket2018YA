@@ -146,4 +146,6 @@ void sig_handler(){
 	numClient--;
 	printf("pid[%d] is terminated. status = %d\n", pid, status);
 	printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어 있습니다.\n", numClient);
+	printf("total client : %d\n", numClient);
 }
+
