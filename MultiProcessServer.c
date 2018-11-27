@@ -16,6 +16,7 @@
 	 
 	void do_service(int c_socket);
 	void sig_handler();
+	int ClaNum=0;
 	main( )
 	{
 		int pid;
@@ -43,7 +44,9 @@
 		while(1) {
 			len = sizeof(c_addr);
 			c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-	        printf("Client is connected\n");
+	        ClaNum++;
+		printf("Client is connected\n");
+		printf("현재 %d개의 클라이언트가 접속하였습니다.\n",ClaNum);
 	        pid = fork();
 	        if(pid > 0){
 	            close(c_socket);
@@ -144,5 +147,7 @@ void sig_handler(int signo){
 	int status;
 	pid = wait(&status);
 	printf("pid[%d] process terminated. tatus=%d\n",pid,status);
+	ClaNum--;
+	printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어 있습니다.\n",ClaNum);
 }
 
