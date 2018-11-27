@@ -3,6 +3,8 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 // 2-1. 서버 프로그램이 사용하는 포트를 9000 --> 10000으로 수정 
 #define PORT 9000
@@ -12,12 +14,15 @@
 //char buffer[BUFSIZE] = "hello, world\n";
 char buffer[BUFSIZE] = "Hi, I'm server\n";
 void do_service(int c_socket);
+void sig_handler();
+int numClient=0;
 main( )
 {
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
 	int   len;
-    int pid;
+    	int pid;
+	signal(SIGCHLD, sig_handler);
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -41,7 +46,9 @@ main( )
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
 		printf("Client is connected\n");
-        pid = fork();
+        numClient++;
+	printf("현재 %d개의 클라이언트가 접속하였습니다.\n",numClient);
+	pid = fork();
         if(pid > 0){ //부모 프로세스
             close(c_socket);
         }else if (pid == 0){ // 자식 프로세스
@@ -77,7 +84,7 @@ void do_service(int c_socket){
             strcpy(buffer, "나는 30살이야.");
         else if(!strncasecmp(rcvBuffer, "strlen ", 7))
             sprintf(buffer, "내 문자열의 길이는 %d입니다.", strlen(rcvBuffer)-7);
-        else if(!strncasecmp(rcvBuffer, "strcmp ", 7)){
+	 else if(!strncasecmp(rcvBuffer, "strcmp ", 7)){
             i = 0;
             token = strtok(rcvBuffer, " ");
             while(token != NULL){
@@ -127,4 +134,14 @@ void do_service(int c_socket){
         n = strlen(buffer);
         write(c_socket, buffer, n);
     }
+}
+
+void sig_handler(int signo){//매개변수에 받는 값이 없어도 꼭 써줘야한다
+	int pid;
+	int status;
+	pid = wait(&status);//자식 프로세스가 종료될 때까지 기다려주는 함수
+	//&status 는 정상,비정상 종료되었는지 확인할 수 있는 값이 담겨있다
+	printf("pid[%d] process terminated status = %d\n", pid, status);
+	numClient--;
+	printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어있습니다.\n",numClient);
 }
