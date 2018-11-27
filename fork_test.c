@@ -1,20 +1,40 @@
 #include<stdio.h>
-
+#include<stdlib.h>
+#include<unistd.h>
 main()
 {
-	int pid;
-	int a = 10;
-	int b = 20;
+	char buf[256];
+	char *argv[50];
+	int narg;
+	pid_t pid;
 
-	a = a + 1;
+	while(1){
+		printf("shell");
+		gets(buf);
+		narg = getargs(buf,argv);
 
-	pid = fork();
-	if(pid > 0){
-		a = a+1;
-		printf("PARENT");
-	}else if(pid==0){
-		b = b+1;
-		printf("CHILD");
+		pid = fork();
+
+		if(pid > 0){
+			execvp(argv[0],argv);
+		}else if(pid==0){
+			wait((int *)0);
+		}else
+			perror("fork failed");
 	}
-	printf("[%d] a=%d/b=%d\n",getpid(),a,b);
+}
+int getargs(char *cmd, char **argv)
+{
+	int narg = 0;
+	while(*cmd){
+		if(*cmd ==' '||*cmd=='\t')
+			*cmd+='\0';
+		else{
+			argv[narg++] = cmd++;
+			while(*cmd!='\0' && *cmd!=' ' && *cmd!='\t')
+				cmd++;
+		}
+	}
+	argv[narg] = NULL;
+	return narg;
 }
