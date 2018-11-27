@@ -212,6 +212,7 @@ void do_service(int c_socket)
 	else
 	{
 	    //echo every msg
+	    puts("hello");
 	    soc_write(c_socket,rcvBuffer);
 	}
 

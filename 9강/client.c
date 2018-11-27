@@ -67,10 +67,11 @@ int  main()
 	}
 	else if(soc_msgcmp(rcvBuffer,"quit") || soc_msgcmp(rcvBuffer,"kill server"))
 	{
-	    close(c_socket);
 	    break;
 	}
     }
+    puts("hi");
     close(c_socket);
+    puts("hi2");
     return 0;
 }
