@@ -33,6 +33,5 @@ int main(){
 	
 	else{ //생성 실패
 		printf("[ERROR] : FORK() FAILED.\n");
-		
 	}
 }
