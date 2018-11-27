@@ -104,7 +104,9 @@ while(1){
 void sig_handler(int signo){
 	int pid;
 		int status;
-	pid=wait();//자식 프로세스가 종료될때까지 기다려주는 함수
+	pid=wait(&status);//자식 프로세스가 종료될때까지 기다려주는 함수
 	printf("pid[%d] process terminated. status[%d]\n",pid,status); 
+	numClient--;
+	printf("1개의 클라이언트가 접속 종료되어 %d개의 클라이언트가 접속되어 있습니다.\n",numClient);
 
 }
