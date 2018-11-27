@@ -2,18 +2,18 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <stdlib.h>
+
 #define PORT 9000
  
 char buffer[BUFSIZ] = "Hi, I'm server\n";
- 
+void do_service(int c_socket); 
 main( )
 {
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
+	int pid;
 	int   len;
-	int   n;
-	int rcvLen;
-	char rcvBuffer[BUFSIZ], *ptr, *ptr2;
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -35,7 +35,26 @@ main( )
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		printf("Client is connected\n");
-		while(1){
+		pid=fork();
+		if(pid>0){//부모프로세스
+			close(c_socket);
+		}else if(pid==0){//자식프로세스(메시지를 주고받는 역할)
+			close(s_socket);
+			do_service(c_socket);
+			exit(0);
+		}else{
+			printf("[ERROR] fork failed\n");
+			exit(0);
+		}
+	}	
+	close(s_socket);
+}
+
+void do_service(int c_socket){
+	int   n;
+	int rcvLen;
+	char rcvBuffer[BUFSIZ], *ptr, *ptr2;
+while(1){
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 			rcvBuffer[rcvLen] = '\0';
 			printf("[%s] received\n", rcvBuffer);
@@ -73,10 +92,4 @@ main( )
 
 			write(c_socket, buffer, strlen(buffer));
 		}
-
-		close(c_socket);
-		if(!strncasecmp(rcvBuffer, "kill server", 11))
-			break;
-	}	
-	close(s_socket);
 }
