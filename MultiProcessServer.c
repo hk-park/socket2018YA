@@ -2,11 +2,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <stdlib.h>
 
-#include <stdio.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <string.h>
 // 2-1. 서버 프로그램이 사용하는 포트를 9000 --> 10000으로 수정 
 #define PORT 9000
 // #define PORT 10000
@@ -24,6 +21,7 @@ int	rcvstrlen;
 char	rcvBuffer[100];
 int	n;
 
+void do_service(int c_socket);
 
 main( ) {
 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
@@ -48,12 +46,16 @@ main( ) {
 		if(pid !=  0) {
 			close(c_socket);
 			continue;
-		} else if(pid == 0) {
+		} else if (pid == 0) {
 			close(s_socket);
 			do_service(c_socket);
-			
+			exit(0);	
+		} else {
+			printf("[ERROR] fork failed.\n");
+			exit(0);
 		}
 	}
+	close(s_socket);
 }
 
 
@@ -62,7 +64,7 @@ main( ) {
 
 
 
-do_service(int c_socket){
+void do_service(int c_socket){
 	char *compare;
 	char *str[3];
 	int i=0;
@@ -110,6 +112,5 @@ do_service(int c_socket){
 		}
 		if(!strncasecmp(rcvBuffer, "kill server", 11))
 			break;
-	}	
-	close(s_socket);
+	}
 }
