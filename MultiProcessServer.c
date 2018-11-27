@@ -1,8 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <string.h>
-#include <stdlib.h>
+#include <signal.h>
+
 
 // 2-1. 서버 프로그램이 사용하는 포트를 9000 --> 10000으로 수정 
 #define PORT 9000
@@ -11,8 +14,8 @@
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 // char buffer[100] = "hello, world\n";
 char buffer[100] = "Hi, I'm server\n";
-
-int	pid;
+void sig_handler(int signo);
+void do_service(int c_socket);
 int	c_socket, s_socket;
 struct	sockaddr_in s_addr, c_addr;
 int	len;
@@ -21,9 +24,11 @@ int	rcvstrlen;
 char	rcvBuffer[100];
 int	n;
 
-void do_service(int c_socket);
 
 main( ) {
+	int pid;
+	signal(SIGCHLD, sig_handler);
+
 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	memset(&s_addr, 0, sizeof(s_addr));
 	//s_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -113,4 +118,13 @@ void do_service(int c_socket){
 		if(!strncasecmp(rcvBuffer, "kill server", 11))
 			break;
 	}
+}
+
+void sig_handler(int signo) {
+	int pid;
+	int status;
+	pid = wait(&status); //자식 프로세스가 종료될 때까지 기다려주는 함수
+	printf("pid[%d] process terminated. status = %d\n", pid, status);
+
+	
 }
