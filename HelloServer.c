@@ -2,10 +2,13 @@
   #include <netinet/in.h> 
   #include <sys/socket.h> 
   #include <string.h> 
+#include<signal.h>
+#include<sys/wait.h>
   #define PORT 9000 
     
   char buffer[BUFSIZ] = "Hi, I'm server\n"; 
-   void do_service();
+   void do_service(int c_socket);
+void sig_handler(int signo);
   main( ) 
   { 
   	int   c_socket, s_socket; 
@@ -13,6 +16,7 @@
   	int   len; 
   	int   n; 
   	int rcvLen; 
+signal[SIGCHLD,sig_handler];
   	char rcvBuffer[BUFSIZ], *ptr, *ptr2; 
    	s_socket = socket(PF_INET, SOCK_STREAM, 0); 
   	 
@@ -96,4 +100,11 @@ while(1){
   
 
   		close(c_socket); 
+}
+void sig_handler(int signo){
+	int pid;
+		int status;
+	pid=wait();//자식 프로세스가 종료될때까지 기다려주는 함수
+	printf("pid[%d] process terminated. status[%d]\n",pid,status); 
+
 }
