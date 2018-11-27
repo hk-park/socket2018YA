@@ -3,6 +3,8 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 #define PORT 9000
 #define COM 5
@@ -19,6 +21,53 @@ char rcvBuffer[BUFSIZE];
 char tok[BUFSIZE];
 char tokCmp[BUFSIZE];
 FILE *fp;
+
+void sendToClient(int c_socket, char *buffer);
+void do_service(int c_socket);
+void sig_handler();
+
+
+main( )
+{	
+	signal(SIGCHLD, sig_handler);
+ 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
+	
+	memset(&s_addr, 0, sizeof(s_addr));
+	s_addr.sin_addr.s_addr = inet_addr(IPADDR);
+	s_addr.sin_family = AF_INET;
+	s_addr.sin_port = htons(PORT);
+ 
+	if(bind(s_socket, (struct sockaddr *) &s_addr, sizeof(s_addr)) == -1) {
+		printf("Can not Bind.\n");
+		return -1;
+	}
+ 
+	if(listen(s_socket, 5) == -1) {
+		printf("listen Fail.\n");
+		return -1;
+	}
+ 	
+	while(1) {
+		len = sizeof(c_addr);
+		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
+		printf("Client is login.\n");
+
+		if((pid = fork( )) > 0) {
+
+		   close(c_socket);
+		   continue;
+
+		} else if(pid == 0) {
+		   
+		   close(s_socket);
+		   do_service(c_socket);
+		   exit(0);
+		}
+	}
+
+	printf("Bye.\n");
+	close(s_socket);
+}
 
 void sendToClient(int c_socket, char *buffer){
 	write(c_socket, buffer, strlen(buffer));	
@@ -82,44 +131,11 @@ void do_service(int c_socket){
 				//break;
 }	
 
-
-main( )
-{
- 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
-	
-	memset(&s_addr, 0, sizeof(s_addr));
-	s_addr.sin_addr.s_addr = inet_addr(IPADDR);
-	s_addr.sin_family = AF_INET;
-	s_addr.sin_port = htons(PORT);
- 
-	if(bind(s_socket, (struct sockaddr *) &s_addr, sizeof(s_addr)) == -1) {
-		printf("Can not Bind.\n");
-		return -1;
-	}
- 
-	if(listen(s_socket, 5) == -1) {
-		printf("listen Fail.\n");
-		return -1;
-	}
- 	
-	while(1) {
-		len = sizeof(c_addr);
-		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-		printf("Client is login.\n");
-
-		if((pid = fork( )) > 0) {
-
-		   close(c_socket);
-		   continue;
-
-		} else if(pid == 0) {
-		   
-		   close(s_socket);
-		   do_service(c_socket);
-		   exit(0);
-		}
-	}
-
-	printf("Bye.\n");
-	close(s_socket);
+void sig_handler(int signo){
+	int pid;
+	int status;
+	pid = wait(&status);
+	printf("pid[%d] process terminated. status = %d\n", pid, status);	
 }
+
+
