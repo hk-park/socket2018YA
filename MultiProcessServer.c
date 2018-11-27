@@ -13,7 +13,7 @@
 
 int c_socket, s_socket;
 struct sockaddr_in s_addr, c_addr;
-int len, check, pid;
+int len, check, pid, count=0;
 int rcvLen;
 char * command, *token;
 char buffer[BUFSIZE];
@@ -51,6 +51,7 @@ main( )
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		printf("Client is login.\n");
+		printf("현재 접속중인 Client : %d\n", ++count);
 
 		if((pid = fork( )) > 0) {
 
@@ -135,7 +136,8 @@ void sig_handler(int signo){
 	int pid;
 	int status;
 	pid = wait(&status);
-	printf("pid[%d] process terminated. status = %d\n", pid, status);	
+	printf("pid[%d] process terminated. status = %d\n", pid, status);
+	printf("현재 접속중인 Client : %d\n", --count);
 }
 
 
