@@ -21,5 +21,5 @@ int main(){
 	}else{ //fork() 실패
 		printf("fork() Failed\n");
 	}
-	return 0;
+	return 0; 
 }
