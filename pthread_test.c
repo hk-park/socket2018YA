@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-void *func_pthread(void *arg);
+void *func_pthread(void *);
 
 int main(){
     int status;
@@ -11,13 +11,14 @@ int main(){
     status = pthread_create(&thread_id, NULL, func_pthread, NULL);
     if(status != 0){
         printf("[ERROR] pthread_create Failed\n");
-        exit(0);
+        exit(1);
     }
     
     printf("thread %x is created\n", thread_id);
-    sleep(5);
+    pthread_join(thread_id, (void **)&status);
+   // sleep(5);
     printf("main function exit\n");
-    return 0;
+	return 0;
 }
 
 void *func_pthread(void *arg){
