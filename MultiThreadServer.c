@@ -2,21 +2,11 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
-#include<stdlib.h>
-#include<signal.h>
-#include<sys/wait.h>
+#include <pthread.h>
 
 #define PORT 9000
 #define BUFSIZE 100
 char buffer[100] = "Hi, I'm server\n";
-
-char *response(char*rcvBuffer);
-void do_service(int c_socket);
-
-int pid;
-int   c_socket, s_socket;
-struct sockaddr_in s_addr, c_addr;
-int   len;
 int   n;
 int rcvLen;
 char rcvBuffer[BUFSIZE];
@@ -27,12 +17,16 @@ char str[3][BUFSIZE];
 char command[BUFSIZE];
 FILE *fp;
 char fileBuffer[BUFSIZE];
-int cnum=0;
-void sig_handler();
-
+void *do_service(void *data);
 main( )
 {
-	signal(SIGCHLD, sig_handler);	
+	int   c_socket, s_socket;
+	struct sockaddr_in s_addr, c_addr;
+	int   len;
+
+	pthread_t pthread;
+	int thr_id;
+
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&s_addr, 0, sizeof(s_addr));
@@ -40,8 +34,6 @@ main( )
 	s_addr.sin_family = AF_INET;
 	s_addr.sin_port = htons(PORT);
  
-	
-
 	if(bind(s_socket, (struct sockaddr *) &s_addr, sizeof(s_addr)) == -1) {
 		printf("Can not Bind\n");
 		return -1;
@@ -55,35 +47,18 @@ main( )
 	while(1) {
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-		cnum++;
-		printf("%d Client is connected\n", cnum);
-		if(pid = fork()>0){
-				close(c_socket);
-				continue;
-		}
-		else if(pid==0){
-			while(1){
-				close(s_socket);
-				do_service(c_socket);
-				exit(0);
-			}
-		}
-		else {
-			printf("error!!");
-		}
-		close(c_socket);
-		if(!strncasecmp(rcvBuffer, "kill server", 11))
-		break;
-	}	
-	close(s_socket);
+		
+		thr_id = pthread_create(&pthread, NULL, do_service, (void *)&c_socket);
+	}
 }
 
-void do_service(int c_socket){  
-	while(1){
+void *do_service(void *data){
+		printf("Client is connected\n");
+		int c_socket = *((int *)data);
+		while(1){
 			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 			rcvBuffer[rcvLen] = '\0';
 			printf("[%s] received\n", rcvBuffer);
-
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
 			else if(!strncmp(rcvBuffer, "안녕하세요.", strlen("안녕하세요.")))
@@ -134,21 +109,15 @@ void do_service(int c_socket){
 				printf("command : %s\n", command);
 				int result = system(command);
 				if(!result) sprintf(buffer, "%s", "명령어가 정상적으로 수행되었습니다.\n");
-			
 				else sprintf(buffer, "%s", "몀령어 수행을 실패하였습니다.\n");				
 			}
                         else{
 				sprintf(buffer, "무슨 말인지 모르겠습니다.");
                         }
-	               n = strlen(buffer);
-	               write(c_socket, buffer, n);
-	}
-}
-
-void sig_handler(){
-	int pid;
-	int status;
-	pid = wait(&status);
-	printf("PID[%d] process terminated.status = %d\n", pid ,status);
-	printf("총 %d개의 클라이언트와 연결중...\n", --cnum);
+                        n = strlen(buffer);
+                        write(c_socket, buffer, n);
+		}
+		close(c_socket);
+		if(!strncasecmp(rcvBuffer, "kill server", 11))
+		return;
 }
