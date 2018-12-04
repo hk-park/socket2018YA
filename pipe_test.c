@@ -24,7 +24,7 @@ int main(){
 		write(fd2[1], buf, strlen(buf));
 	}else if (pid == 0){
 		//자식 프로세스
-		//파이프를 통해 부모 프로세스에게 값을 전달
+		//파이프를 통해 부모 프로세스에게 값
 		memset(buf, 0x00, 255);
 		sprintf(buf, "[%d] Hello, I'm child.", getpid());
 		write(fd[1], buf, strlen(buf));
