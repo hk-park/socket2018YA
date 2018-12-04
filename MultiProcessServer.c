@@ -13,7 +13,8 @@
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 //char buffer[BUFSIZE] = "hello, world\n";
 char buffer[BUFSIZE] = "Hi, I'm server\n";
-int numClient = 0; 
+int numClient = 0;
+int fd[2];
 void do_service(int c_socket);
 void sig_handler();
 main( )
@@ -40,7 +41,10 @@ main( )
 		printf("listen Fail\n");
 		return -1;
 	}
- 	
+    if(pipe(fd) < 0){
+        printf("ERROR] pipe open failed\n");
+        exit(0);
+    }
 	while(1) {
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
@@ -137,13 +141,21 @@ void do_service(int c_socket){
 		n = strlen(buffer);
 		write(c_socket, buffer, n);
 	}
+    write(fd[1], rcvBuffer, strlen(rcvBuffer));
 	close(c_socket);
 }
 void sig_handler(){
 	int pid;
 	int status;
+    char buf[BUFSIZE];
 	pid = wait(&status);
 	numClient--;
 	printf("pid[%d] is terminated. status = %d\n", pid, status);
 	printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어 있습니다.\n", numClient);
+    memset(buf, 0x00, BUFSIZE);
+    read(fd[0], buf, sizeof(buf));
+    if(!strncmp(buf, "kill server", strlen("kill server"))){
+        printf("server is terminate by kill server command\n");
+        exit(0);
+    }
 }
