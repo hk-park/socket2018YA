@@ -27,5 +27,6 @@ void *func_pthread(void *arg){
         sleep(1);
         i++;
         printf("thread %dth executing...\n", i);
+	sleep(1);
     }
 }
