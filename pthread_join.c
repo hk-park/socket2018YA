@@ -27,12 +27,12 @@ void *do_sum(void *val)
 	int sum = 0;
 	int max = *((int *)val); //주의
 	
-	for(i=0; i<10; i++)
+	for(i=0; i<max; i++)
 	{
 		sum = sum + i;
 		printf("%d - add %d \n", max , i);
 		sleep(1);
 	}
 
-	printf("%d - sum id %d \n", max, sum);
+	printf("%d - sum is %d \n", max, sum);
 }
