@@ -11,8 +11,8 @@ int main(){
 	int c = 6;
 
 	status = pthread_create(&thread_id[0], NULL, do_sum, (void *)&a); //int 타입의 a를 void*로 변환하고 int의 주솟값으로 수정
-	status = pthread_create(&thread_id[0], NULL, do_sum, (void *)&a);
-	status = pthread_create(&thread_id[0], NULL, do_sum, (void *)&a);
+	status = pthread_create(&thread_id[1], NULL, do_sum, (void *)&b);
+	status = pthread_create(&thread_id[2], NULL, do_sum, (void *)&c);
 	
 	pthread_join(thread_id[0], (void **)&status);
 	pthread_join(thread_id[1], (void **)&status);
