@@ -9,6 +9,7 @@
 
 #define PORT 9000
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 int count=0;
 char buffer[BUFSIZ] = "";
 
@@ -47,7 +48,9 @@ main( )
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		printf("Client is connected\n");		
 		
+		pthread_mutex_lock(&mutex);
 		count++;
+		pthread_mutex_unlock(&mutex);
 		printf("현재 %d개의 클라이언트가 접속하였습니다.\n", count);
 
 		thr_id = pthread_create(&pthread, NULL, do_service, (void*)&c_socket);
@@ -139,5 +142,9 @@ void *do_service(void *data){
 		write(c_socket, buffer, strlen(buffer));
 		memset(buffer, 0, sizeof(buffer));
 	}
+
+		pthread_mutex_lock(&mutex);
+		count--;
+		pthread_mutex_unlock(&mutex);
 }
 
