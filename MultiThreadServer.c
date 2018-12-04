@@ -8,10 +8,8 @@
 #define PORT 9000
 //#define PORT 10000
 #define BUFSIZE 10000 
-// 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
-//char buffer[BUFSIZE] = "hello, world\n";
-char buffer[BUFSIZE] = "Hi, I'm server\n";
-
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+int  numClient = 0;
 void *do_service(void *val);
 main( )
 {
@@ -42,13 +40,17 @@ main( )
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
 		//3-3.클라이언트가 접속했을 때 "Client is connected" 출력
-		printf("Client is connected\n");
 		thr_id = pthread_create(&pthread, NULL, do_service, (void *)&c_socket);
+		pthread_mutex_lock(&mutex);
+		numClient++;
+		pthread_mutex_unlock(&mutex);
+		printf("%dth client is connected\n", numClient);
 	}	
 	close(s_socket);
 }
 
 void *do_service(void *val){
+	char buffer[BUFSIZE] = "Hi, I'm server\n";
 	int   n;
 	int rcvLen;
 	char rcvBuffer[BUFSIZE];
@@ -120,4 +122,7 @@ void *do_service(void *val){
 		n = strlen(buffer);
 		write(c_socket, buffer, n);
 	}
+	pthread_mutex_lock(&mutex);
+	numClient--;
+	pthread_mutex_unlock(&mutex);
 }
