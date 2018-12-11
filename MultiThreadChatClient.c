@@ -77,6 +77,3 @@ void *do_receive_chat(void *arg) {
 
 	}
 }
-
-
-
