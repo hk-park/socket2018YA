@@ -10,7 +10,7 @@
 #define CHATDATA 1024
 #define INVALID_SOCK -1
 #define PORT 9000
-#define USERNAME 256
+#define USERNAME 300
 
 struct user{
 	char name[USERNAME];
@@ -21,7 +21,6 @@ void *do_chat(void *); //채팅 메세지를 보내는 함수
 int pushClient(int); //새로운 클라이언트가 접속했을 때 클라이언트 정보 추가
 int popClient(int); //클라이언트가 종료했을 때 클라이언트 정보 삭제
 
-//int    list_c[MAX_CLIENT]; //접속한 클라이언트를 관리하는 배열
 struct user list_c[MAX_CLIENT];
 char    greeting[ ] = "WELLCOM! FREAND!! [ /w : 귓속말]\n";
 char    CODE200[ ] = "[ERORR] : CAN NOT CONNECT MORE CLIENT.\n";
@@ -78,6 +77,8 @@ int main(int argc, char *argv[]){
 	}
 }
 
+
+
 void *do_chat(void *arg){
 	int c_socket = *((int *)arg);
 	char chatData[CHATDATA], tempData[CHATDATA], userChk[USERNAME];
@@ -126,7 +127,9 @@ void *do_chat(void *arg){
 	}
 }
 
-int pushClient(int c_socket) {
+
+
+int pushClient(int c_socket) { //리스트에 c소켓 추가
 	int i, n;
 	char user_name[USERNAME];
 
@@ -149,9 +152,10 @@ int popClient(int c_socket){
 	int i, j;
 	close(c_socket);
 
+	// 리스트 배열로부터 c소켓 제거
 	for(i=0; i<MAX_CLIENT; i++){
 		if(list_c[i].sock == c_socket){
-			printf("[%d] %s 님이 대화방에서 나갔습니다.\n",i+1, list_c[i].name);
+			printf("[%d] %s 님이 대화방에서 나갔습니다 ! \n",i+1, list_c[i].name);
 			for(j=i; j<MAX_CLIENT; j++){
 				list_c[i].sock = list_c[j+1].sock;
 				if(list_c[j].sock == INVALID_SOCK) break;
