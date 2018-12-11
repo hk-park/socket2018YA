@@ -15,6 +15,7 @@ pthread_mutex_t mutex;
 #define INVALID_SOCK -1
 #define PORT 9000
 int list_c[MAX_CLIENT]; //접속한 클라이언트를 관리하는 배열
+int client_num = 0;
 char escape[ ] = "exit";
 char greeting[ ] = "Welcome to chatting room\n";
 char CODE200[ ] = "Sorry No More Connection\n";
@@ -57,7 +58,7 @@ int main(int argc, char *argv[ ])
         } else {
             write(c_socket, greeting, strlen(greeting));
             //pthread_create with do_chat function.
-			 list_c[res] = thread;
+			 pthread_create(&thread, NULL, do_chat, (void *)&c_socket);
         }
     }
 }
@@ -65,42 +66,63 @@ void *do_chat(void *arg)
 {
     int c_socket = *((int *)arg);
     char chatData[CHATDATA];
-    int i, n;
+    int i, n, j;
+	char *token;
+	char *str[3];
     while(1) {
         memset(chatData, 0, sizeof(chatData));
         if((n = read(c_socket, chatData, sizeof(chatData))) > 0) {
             //write chatData to all clients
 						chatData[n] = '\0';
-				for(i=0;i<MAX_CLIENT;i++){
-					//여기부터 시작
-						write(c_socket, chatData, strlen(chatData)); 
-            if(strstr(chatData, escape) != NULL) {
-                popClient(c_socket);
-                break;
-            }
+			if(!strncasecmp(chatData, "/w ", strlen("/w "))){
+				j=0;
+				token = strtok(chatData, " ");
+				while(token != NULL){
+					str[j++] = token;
+					token = strtok(NULL, " ");
+				}
+				strcpy(chatData, str[2]);
+				pthread_mutex_lock(&mutex);
+				for(i=0; i<MAX_CLIENT; i++){
+					if(strcmp(str[1], list_c[i]))
+						write(list_c[i], chatData, strlen(chatData));
+				} 
+			}
+			for(i=0; i<MAX_CLIENT; i++){
+				write(list_c[i], chatData, strlen(chatData));
+			}
+			if(strstr(chatData, escape) != NULL) {
+				popClient(c_socket);
+				break;
+           		 }
         }
     }
 }
 int pushClient(int c_socket) {
-	int i;
+	int i=0;
+	if(client_num >= MAX_CLIENT){
+		close(c_socket);
+		return -1;
+	}
 	pthread_mutex_lock(&mutex);
 	for(i = 0; i < MAX_CLIENT; i++){
-		if(list_c[i] == INVALID_SOCK)
+		if(list_c[i] == INVALID_SOCK){
+			list_c[i] = c_socket;
 			break;
+		}
 	}
-	pthread_create(&thread, NULL, do_chat, (void *)&c_socket)
-	pthread_mutex_unlock(&mutex);	
-	if(i == MAX_CLIENT-1)
-		return -1;
-	else
-		return i;
+	client_num++;
+	pthread_mutex_unlock(&mutex);
+	return i;
     //ADD c_socket to list_c array.
     //return -1, if list_c is full.
     //return the index of list_c which c_socket is added.
 }
 int popClient(int c_socket)
 {
-	int i;
+	int i=0;
+	if(client_num < 0)
+		return;
 	pthread_mutex_lock(&mutex);
 	for(i = 0; i < MAX_CLIENT; i++){
 		if(list_c[i] == INVALID_SOCK){
@@ -108,9 +130,10 @@ int popClient(int c_socket)
 			break;
 		}
 	}
-	pthread_mutex_unlock(&mutex);
 	if(i == MAX_CLIENT-1)
 		list_c[i] = INVALID_SOCK;
-  close(c_socket);
+	client_num--;
+	pthread_mutex_unlock(&mutex);
+	close(c_socket);
     //REMOVE c_socket from list_c array.	
 }
