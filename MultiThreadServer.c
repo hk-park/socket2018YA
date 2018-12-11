@@ -9,19 +9,34 @@
 #define BUFSIZE 10000
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
 
-void *do_service(void* val);
+void *do_chat(void *);
+int pushClient(int);
+int popClient(int);
 
-char buffer[BUFSIZE] = "Hi, I'm Server.\n";
-char nothing[BUFSIZE] = "아무것도 아님\n";
+pthread_t thread;
+pthread_mutex_t mutex;
 
-int main()
+#define MAX_CLIENT 10
+#define CHATDATA 1024
+#define INVALID_SOCK -1
+
+int clientCount = 0;
+int list_c[MAX_CLIENT];
+char escape[ ] = "exit";
+char greeting[ ] = "Welcome to chatting room.\n";
+char CODE200[ ] = "Sorry No More Connection. \n";
+
+int main(int argc, char *argv[ ])
 {
-	int c_socket, s_socket, rcvLen, len;		// 변수 선언
+	int c_socket, s_socket;		// 변수 선언
 	struct sockaddr_in s_addr, c_addr;	// 클라이언트에서 보낸 데이터 받음
-	char rcvBuffer[BUFSIZE], *ptr,  *ptr1, *ptr2, buffer[BUFSIZE];				// 소켓 통신 정보 (구조체)	
+	int i, j, n, res, len;
 
-	pthread_t pthread;
-	int thread_id;
+	if (pthread_mutex_init(&mutex, NULL) != 0)
+	{
+		printf("Can not create mutex \n");
+		return -1;
+	}
 
 	s_socket = socket(PF_INET, SOCK_STREAM, 0);			// 서버 소켓 생성	
 
@@ -40,89 +55,81 @@ int main()
 		return -1;
 	}
 
-	while(1) {
+	for (i = 0; i < MAX_CLIENT; i++)
+		list_c[i] = INVALID_SOCK;	
+
+	while (1)
+	{
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-		thread_id = pthread_create(&pthread, NULL, do_service, (void *)&c_socket);		
-
-		printf("Client is connected !\n");
+		res = pushClient(c_socket);
+		if (res < 0)
+		{
+			write(c_socket, CODE200, strlen(CODE200));
+			close(c_socket);
+		}
+		else
+		{
+			write(c_socket, greeting, strlen(greeting));
+			pthread_create(&thread, NULL, do_chat, (void *)&c_socket);
+		}
 	}
-
-
 	close(s_socket);
-	return 0;
 }
 
-void *do_service(void *val) {
-	char rcvBuffer[100];
-	int rcvLen, n;
-	int c_socket = *((int *)val);
-	while(1){
-		char *token;
-                char *str[3];
-                int i = 0;
+int pushClient(int c_socket)
+{
+	if (clientCount >= MAX_CLIENT)
+	{
+		printf("클라이언트가 최대 수를 초과하였습니다.\n");
+		return -1;
+	}
+	else
+	{
+		pthread_create(&thread, NULL, do_chat, (void *)&c_socket);
+		pthread_mutex_lock(&mutex);
+		list_c[clientCount++] = c_socket;
+		pthread_mutex_unlock(&mutex);
+		printf("%d 개의 클라이언트가 접속하였습니다.\n", clientCount);
+	}
+}
 
-		rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
-		rcvBuffer[rcvLen] = '\0';
-		printf("[%s] received\n", rcvBuffer);
-		if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
-			break;
-		else if(!strncmp(rcvBuffer, "안녕하세요", strlen("안녕하세요")))
-			strcpy(buffer, "안녕하세요. 만나서 반가워요.");
-		else if(!strncmp(rcvBuffer, "이름이 머야?", strlen("이름이 머야?")))
-			strcpy(buffer, "내 이름은 김건우야.");
-		else if(!strncmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?")))
-			strcpy(buffer, "나는 25살이야.");
-		else if(!strncasecmp(rcvBuffer, "strlen ", 7))
-			sprintf(buffer, "내 문자열의 길이는 %d입니다.", strlen(rcvBuffer)-7);
-		else if(!strncasecmp(rcvBuffer, "strcmp ", 7)){
-			token = strtok(rcvBuffer, " ");
-			while(token != NULL){
-				str[i++] = token;
-				token = strtok(NULL, " ");
-			}
-			if(i<3)
-				sprintf(buffer, "문자열 비교를 위해서는 두 문자열이 필요합니다.");
-			else if(!strcmp(str[1], str[2])) //같은 문자열이면,
-				sprintf(buffer, "%s와 %s는 같은 문자열입니다.", str[1], str[2]);
-			else
-				sprintf(buffer, "%s와 %s는 다른 문자열입니다.", str[1], str[2]);
-		} else if (!strncasecmp(rcvBuffer, "readfile ", 9)) {
-			i = 0;
-			token = strtok(rcvBuffer, " ");
-			while(token != NULL){
-				str[i++] = token;
-				token = strtok(NULL, " ");
-			}
-			if(i<2)
-				sprintf(buffer, "readfile 기능을 사용하기 위해서는 readfile <파일명> 형태로 입력하시오.");
-			FILE *fp = fopen(str[1], "r");
-			if(fp){
-				char tempStr[100];
-				memset(buffer, 0, 100);
-				while(fgets(tempStr, 100, (FILE *)fp)){
-					strcat(buffer, tempStr);
-				}
-				fclose(fp);
-			}else{
-				sprintf(buffer, "파일이 없습니다.");
-			}
-		}else if (!strncasecmp(rcvBuffer, "exec ", 5)) {
-			char *command;
-			token = strtok(rcvBuffer, " "); //exec
-			command = strtok(NULL, "\0");
-			printf("command: %s\n", command);
-			int result = system(command);
-			if(result)
-				sprintf(buffer, "[%s] 명령어가 실패하였습니다.", command);
-			else
-				sprintf(buffer, "[%s] 명령어가 성공하였습니다.", command);
-			
-		}else
-			strcpy(buffer, "무슨 말인지 모르겠습니다.");
-			n = strlen(buffer);
-			write(c_socket, buffer, n);
-		}	
+int popClient(int c_socket)
+{
+	list_c[--clientCount] = INVALID_SOCK;
 	close(c_socket);
+	printf("현재 %d개의 클라이언트가 남아있습니다.\n", clientCount);
+	return -1;
 }
 
+void *do_chat(void *arg)
+{
+	int c_socket = *((int *)arg);
+	char chatData[CHATDATA], rcvChatData[CHATDATA];
+	int i, len;
+	while(1)
+	{
+		memset(chatData, 0, sizeof(chatData));
+		if ((len = read(c_socket, chatData, sizeof(chatData))) > 0)
+		{
+			// wirte chatData to all clients
+			rcvChatData[len] = '\0';
+			if (!strncasecmp(rcvChatData, "w ", 3))
+			{
+				
+			}
+			else
+			{
+				for(i = 0; i < clientCount; i++)
+				{
+					write(list_c[i], chatData, strlen(chatData));
+				}
+			}
+			if (strstr(chatData, escape) != NULL)
+			{
+				popClient(c_socket);
+				break;
+			}
+		}
+	}
+}
