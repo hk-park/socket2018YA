@@ -5,19 +5,30 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <pthread.h>
+
 void *do_chat(void *); //채팅 메세지를 보내는 함수
 int pushClient(int); //새로운 클라이언트가 접속했을 때 클라이언트 정보 추가
 int popClient(int); //클라리언트가 종료했을 때 클라이언트 정보 삭제
 pthread_t thread;
 pthread_mutex_t mutex;
+
 #define MAX_CLIENT 10
 #define CHATDATA 1024
 #define INVALID_SOCK -1
 #define PORT 9000
-int list_c[MAX_CLIENT]; //접속한 클라이언트를 관리하는 배열
+
+#define WHISPER "/\"
+#define DELIMETER " "
+struct chatClient{
+	int c_socket;
+	char nickname[CHATDATA];
+};
+struct chatClient clientList[MAX_CLIENT];
+//int list_c[MAX_CLIENT]; //접속한 클라이언트를 관리하는 배열
 char escape[] = "exit";
 char greeting[] = "Welcome to chatting room\n";
 char CODE200[] = "Sorry No More Connection\n";
+
 int main(int argc, char *argv[])
 {
 	int c_socket, s_socket;
@@ -43,17 +54,22 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	for(i=0; i<MAX_CLIENT; i++)
-		list_c[i] = INVALID_SOCK;
+		//list_c[i] = INVALID_SOCK;
+		clientList[i].c_socket = INVALID_SOCK;
 	while(1) {
 		len = sizeof(c_addr);
 		c_socket=accept(s_socket, (struct sockaddr *) &c_addr, &len);
+		if((n=read(c_socket, nickname, sizeof(nickname)))<0) {
+			printf("nickname read fail.\n");
+			return -1;
+		}
 		res = pushClient(c_socket); //접속한 클라이언트를  list_c에 추가
 		if(res<0) { //MAX_CLIENT만큼 이미 클라이언트가 접속해 있다면,
 			write(c_socket, CODE200, strlen(CODE200));
 			close(c_socket);
 		} else {
 			write(c_socket, greeting, strlen(greeting));
-			//pthread_create with do_chat function.
+			pthread_create(&thread, NULL, do_chat, (void *) &c_socket);
 		}
 	}
 }
@@ -66,9 +82,10 @@ void *do_chat(void *arg)
 	while(1) {
 		memset(chatData, 0, sizeof(chatData));
 		if((n=read(c_socket, chatData, sizeof(chatData)))>0) {
-			//write chatdata to all clients
-			//
-			//
+			char *token = NULL;
+			char *nickname = NULL;
+			char *message = NULL;
+			
 			if(strstr(chatData, escape)!=NULL) {
 				popClient(c_socket);
 				break;
