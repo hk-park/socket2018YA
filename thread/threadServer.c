@@ -16,7 +16,7 @@
 #define SIG_PRINT SIGUSR2
 #define CLIENT_NUM 5
 
-//GLOBALs
+//VARs
 char rcvBuffer[BUF_SIZ];
 char sendBuffer[BUF_SIZ];
 char buffer[BUF_SIZ] = "My name is Hongkyu.\n";
@@ -31,13 +31,11 @@ typedef struct tag_client_socket{
 }client_socket_info;
 client_socket_info g_client_sockets[CLIENT_NUM];
 
-int s_socket;
-
+int g_server_socket;
 pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
 
+//FUNCs
 void *do_service(void *data);
-void sig_kill_server(int signum);
-void sig_print(int signum);
 
 main( )
 {
@@ -52,11 +50,8 @@ main( )
 
     pthread_t pthread;
     int thr_status;
-    
-    signal(SIG_KILL_SERVER, sig_kill_server);
-    signal(SIG_PRINT,sig_print);
 
-    s_socket = socket(PF_INET, SOCK_STREAM, 0);
+    g_server_socket = socket(PF_INET, SOCK_STREAM, 0);
 
     //init socket
     memset(g_client_sockets,-1,sizeof(client_socket_info)*5);
@@ -66,20 +61,20 @@ main( )
     s_addr.sin_family = AF_INET;
     s_addr.sin_port = htons(PORT);
 
-    if(bind(s_socket, (struct sockaddr *) &s_addr, sizeof(s_addr)) == -1) {
+    if(bind(g_server_socket, (struct sockaddr *) &s_addr, sizeof(s_addr)) == -1) {
 	printf("Can not Bind\n");
 	return -1;
     }
 
-    if(listen(s_socket, CLIENT_NUM) == -1) {
+    if(listen(g_server_socket, CLIENT_NUM) == -1) {
 	printf("listen Fail\n");
 	return -1;
     }
 
     while(1) {
 	len = sizeof(c_addr);
-	
-	c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
+
+	c_socket = accept(g_server_socket, (struct sockaddr *) &c_addr, &len);
 	printf("클라이언트 접속 완료\n클라이언트 총 갯수: %d\n",++g_clientCnt);
 
 	thr_status = pthread_create(&pthread,NULL,do_service,&c_socket);
@@ -88,56 +83,15 @@ main( )
 	{
 	    if(g_client_sockets[i].socket== -1)
 	    {
-	        g_client_sockets[i].socket=c_socket;
-	        g_client_sockets[i].thread_id=pthread;
-	        break;
+		g_client_sockets[i].socket=c_socket;
+		g_client_sockets[i].thread_id=pthread;
+		break;
 	    }
 	}
 
     }
 }
 
-void sig_kill_server(int signum)
-{
-    int i=0;
-    int cnt=0;
-    printf("kill server\n");
-   
-    //close all clients
-    for(i=0;i<CLIENT_NUM;++i)
-    {
-	if(g_client_sockets[i].socket !=-1 )
-	{
-	    soc_write(g_client_sockets[i].socket,"kill server commited");
-	    close(g_client_sockets[i].socket);
-
-	    printf("thread_id : [%x], c_socket : [%d]\n",g_client_sockets[i].thread_id, g_client_sockets[i].socket);
-	    cnt++;
-	}
-    }
-    
-    printf("총 클라이언트 개수 : %d\n",g_clientCnt);
-    printf("총 %d 개의 클라이언트 종료됨.\n",cnt);
-
-    //finally close server socket and
-    //finish server program.
-    close(s_socket);
-    exit(0);
-}   
-
-void sig_print(int signum)
-{
-    int i=0;
-
-    for(i=0;i<CLIENT_NUM;++i)
-    {
-	puts("=================");
-	printf("[%d]\n",i);
-	printf("tid: %x\n",g_client_sockets[i].thread_id);
-	printf("socket: %d\n",g_client_sockets[i].socket);
-    } 
-    puts("=================");
-}
 
 void *do_service(void *data)
 {
@@ -163,6 +117,7 @@ void *do_service(void *data)
 
     //for loop
     int i=0;
+    int cnt=0;
 
     //update
     while(1)
@@ -275,30 +230,65 @@ void *do_service(void *data)
 	    soc_write(c_socket,"quit commited");
 
 	    printf("tid [%x] finished\nsocket : %d\n",pthread_self(),c_socket);
-
-	    pthread_mutex_lock(&mutex);
 	    printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어 있습니다.\n",--g_clientCnt);
 
+	    pthread_mutex_lock(&mutex);
 	    for(i=0;i<CLIENT_NUM;++i)
 		if(g_client_sockets[i].socket==c_socket)
 		{
-		   g_client_sockets[i].socket = -1;
-		   g_client_sockets[i].thread_id = -1;
+		    g_client_sockets[i].socket = -1;
+		    g_client_sockets[i].thread_id = -1;
 		}
 	    pthread_mutex_unlock(&mutex);
-	    
+
 	    close(c_socket);
 	    return NULL;
 	}
 	else if(soc_msgcmp(rcvBuffer,"kill server"))
 	{
-	    kill(getpid(),SIG_KILL_SERVER);
-	    return NULL;
+	    cnt=0;
+	    printf("kill server\n");
+
+	    //close all clients
+	    pthread_mutex_lock(&mutex);
+	    for(i=0;i<CLIENT_NUM;++i)
+	    {
+		if(g_client_sockets[i].socket !=-1 )
+		{
+		    printf("thread_id : [%x], c_socket : [%d]\n",g_client_sockets[i].thread_id, g_client_sockets[i].socket);
+
+		    soc_write(g_client_sockets[i].socket,"kill server commited");
+		    close(g_client_sockets[i].socket);
+
+		    g_client_sockets[i].socket = -1;
+		    g_client_sockets[i].thread_id = -1;
+
+		    cnt++;
+		}
+	    }
+	    pthread_mutex_unlock(&mutex);
+	    pthread_mutex_destroy(&mutex);
+
+	    printf("총 클라이언트 개수 : %d\n",g_clientCnt);
+	    printf("총 %d 개의 클라이언트 종료됨.\n",cnt);
+
+	    //finally close server socket and
+	    //finish server program.
+	    close(g_server_socket);
+	    exit(0);
 	}
 	else if(soc_msgcmp(rcvBuffer,"print socket"))
 	{
 	    soc_write(c_socket,"printed socket info to server");
-	    kill(getpid(),SIG_PRINT);
+
+	    for(i=0;i<CLIENT_NUM;++i)
+	    {
+		puts("=================");
+		printf("[%d]\n",i);
+		printf("tid: %x\n",g_client_sockets[i].thread_id);
+		printf("socket: %d\n",g_client_sockets[i].socket);
+	    } 
+	    puts("=================");
 	}
 	else
 	{

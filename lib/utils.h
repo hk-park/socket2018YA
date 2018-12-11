@@ -22,9 +22,19 @@
 //in_ source, in_ target
 int soc_msgcmp(char *source, char* target)
 {
+    int result=0;
+
     if(source==NULL || target == NULL)
-	exit(1);
-    return !strncasecmp(source,target,strlen(target));
+	exit(-1);
+    return (result=strncasecmp(source,target,strlen(target)) ) ? 0 : 1;
+}
+
+int soc_msgcmp_full(char *source,char *target)
+{
+    int result=0;
+    if(source==NULL || target == NULL)
+	exit(-1);
+    return (result=strncasecmp(source,target,strlen(target)) ) ? 0 : 1;
 }
 
 //in_ src, in_ limit, out_ strCnt
