@@ -9,22 +9,20 @@
 #define PORT 9000
 #define BUFSIZE 10000 
 
-char buffer[BUFSIZE] = "Hi, I'm server\n";
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 int numClient = 0;
  
-void do_service(int c_socket);
-void sig_handler(int signo);
+void *do_service(void *val);
 
 main( )
 {
 	int   c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
-	int pid;
 	int len;
-	signal(SIGCHLD, sig_handler);
 	
-	pthread t pthread;
-	int thr id;
+	pthread_t pthread;
+	int thr_id;
 
  	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	
@@ -47,36 +45,22 @@ main( )
 	while(1) {
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-		printf("Client is connected\n");
-
 		thr_id = pthread_create(&pthread, NULL, do_service, (void *)&c_socket);
-
+		pthread_mutex_lock(&mutex);
 		numClient++;
-		printf("현재 %d개의 클라이언트가 접속하였습니다.\n", numClient);
-		
-		pid = fork();
-		
-		if(pid > 0){
-			close(c_socket);
-		}else if(pid==0){
-			close(c_socket);
-			do_service(c_socket);
-			exit(0);
-		}else{
-			printf("[ERROR] fork failed\n");
-			exit(0);
-		}		
+		pthread_mutex_unlock(&mutex);
+		printf("현재 %d개의 클라이언트가 접속하였습니다.\n", numClient);	
 	}	
 	close(s_socket);
 }
 
-void * do_service(void *data){
+void *do_service(void *val){
 
+	char buffer[BUFSIZE] = "Hi, I'm server\n";
 	int n;
 	int rcvLen;	
 	char rcvBuffer[BUFSIZE];
-
-	int c_socket=*((int *)data);
+	int c_socket = *((int *)val);
 
 	while(1){
 			char *token;
@@ -145,17 +129,8 @@ void * do_service(void *data){
 			n = strlen(buffer);
 			write(c_socket, buffer, n);
 		}
-
-}
-
-void sig_handler(int signo){
-	int pid;
-	int status;
-	pid  = wait(&status); //자식 프로세스가 종료될 때까지 기다려주는 함수
-	printf("pid[%d] process terminated. status = %d\n", pid, status);
-	
-	numClient--;
-	printf("1개의 클라이언트가 접속 종료되어 %d개의 클라이언트가 접속되어 있습니다.\n", numClient);
-
+		pthread_mutex_lock(&mutex);
+		numClient--;
+		pthread_mutex_unlock(&mutex);
 }
 
