@@ -95,20 +95,3 @@ int popClient(int c_socket) {
 	//REMOVE c_socket from list_c array
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
