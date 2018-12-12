@@ -14,7 +14,14 @@ pthread_mutex_t mutex;
 #define CHATDATA 1024
 #define INVALID_SOCK -1
 #define PORT 9000
-int    list_c[MAX_CLIENT]; //접속한 클라이언트를 관리하는 배열
+
+struct user{
+	int list;
+	char cName[20];
+};
+
+struct user us[MAX_CLIENT];
+// int    list_c[MAX_CLIENT]; //접속한 클라이언트를 관리하는 배열
 char    escape[ ] = "exit";
 char    greeting[ ] = "Welcome to chatting room\n";
 char    CODE200[ ] = "Sorry No More Connection\n";
@@ -53,7 +60,7 @@ int main(int argc, char *argv[ ])
             close(c_socket);
         } else {
             write(c_socket, greeting, strlen(greeting));
-            //pthread_create with do_chat function.
+            	pthread_create(%thread, NULL, do_chat, (void*)&c_socket);
         }
     }
 }
@@ -61,31 +68,73 @@ void *do_chat(void *arg)
 {
     int c_socket = *((int *)arg);
     char chatData[CHATDATA];
+    char chatData[CHATDATA];
     int i, n;
+	char *msg, *rec, *whi, *send;
     while(1) {
         memset(chatData, 0, sizeof(chatData));
         if((n = read(c_socket, chatData, sizeof(chatData))) > 0) {
-            //write chatData to all clients
-            //
-            ///////////////////////////////
+		strcpy(tempData, chatData);
+		msg = strstr(tempData, "/w");
+		
+		if(msg == NULL) {
+			for(i=0; i<MAX_CLIENT; i++) {
+				if(us[i].list != INVALID_SOCK && us[i].list != c_socket)
+					write(us[i].list, chatData, n);
+			}
             if(strstr(chatData, escape) != NULL) {
                 popClient(c_socket);
                 break;
-            }
-        }
+           }
+		}
+		else {
+			rec = strtok(chatData, " ");
+			whi = strtok(NULL, "/w ");
+			send = strtok(NULL, " ");
+			for(i=0; i<MAX_CLIENT; i++) {
+				if(!strcmp(us[i].cName, whi)) {
+					write(us[i].list, chatData, strlen(chatData));
+					write(us[i].list, send, strlen(send));
+				}
+			}
+		}
+           }
     }
+
 }
 int pushClient(int c_socket) {
-    //ADD c_socket to list_c array.
-    //
-    ///////////////////////////////
-    //return -1, if list_c is full.
-    //return the index of list_c which c_socket is added.
+	int i, n;
+    char cName[CHATDATA];
+    memset(cName, 0, sizeof(cName));
+    for(i=0; i<MAX_CLIENT; i++) {
+    	pthread_mutex_lock(&mutex);
+	if(us[i].list == INVALID_SOCK) {
+		us[i].list = c_socket;
+		if(read(c_socket, cName, sizeof(cName))>0)
+			strcpy(us[i].cName, cName);
+		//printf("%d %s\n", us[i].list, us[i].cName);
+		pthread_mutex_unlock(&mutex);
+		return i;
+	}
+	pthread_mutex_unlock(&mutex);
+    }
+    if(i==MAX_CLIENT)
+	return -1;
 }
 int popClient(int c_socket)
 {
+
     close(c_socket);
-    //REMOVE c_socket from list_c array.
-    //
-    ///////////////////////////////////
+    int i;
+    for(i=0; i<MAX_CLIENT; i++) {
+	pthread_mutex_lock(&mutex);
+	if(c_socket == us[i].list) {
+		us[i].list = INVALID_SOCK;
+		pthread_mutex_unlock(&mutex);
+		break;
+	}
+	pthread_mutex_unlock(&mutex);
+    }
+    return 0;
+
 }
