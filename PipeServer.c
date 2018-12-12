@@ -19,7 +19,7 @@ char rcvBuffer[BUFSIZE];
 int numClient = 0;
 int fd[2];
 void function (int c_socket);
-void sig_handler(int signo);
+void sig_handler();
 
 main( )
 {
@@ -87,10 +87,7 @@ void function(int c_socket){
 					return -1;
 				}
 				printf("Received Data From Client: %s\n", rcvBuffer);
-				if(strcasecmp(rcvBuffer, "quit")== 0 || strcasecmp(rcvBuffer, "kill server")==0){
-					spid=getppid();
-					sprintf(pipeBuf,"%d",spid);
-					write(fd[1],pipeBuf,strlen(pipeBuf));
+				if(strcasecmp(rcvBuffer, "quit")== 0||strcasecmp(rcvBuffer, "kill server")==0){
 					break;
 				}else if(strncasecmp(rcvBuffer, "readfile",8)==0){
 					read_text = strtok(rcvBuffer, " ");
@@ -108,12 +105,21 @@ void function(int c_socket){
 				n = strlen(buffer);
 				write(c_socket, buffer, n);
 	}
+	close(c_socket);
+	write(fd[1],rcvBuffer, strlen(rcvBuffer));
 }
-void sig_handler(int signo){
+void sig_handler(){
 	int pid;
 	int status;
+	char buf[BUFSIZE];
 	pid = wait(&status);
 	printf("pid[%d] process terminated.status = %d\n", pid, status);
 	numClient--;
 	printf("1개의 클라이언트가 접속종료되어 %d개의 클라이언트가 접속되어 있습니다.\n", numClient);
+	memset(buf,0x00,BUFSIZE);
+	read(fd[0], buf, sizeof(buf));
+	if(!strncmp(buf,"kill server", strlen("kill server"))){
+		printf("서버가 종료됩니다.");
+		exit(0);
+	}
 }
