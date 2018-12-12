@@ -117,7 +117,8 @@ void *do_chat(void *arg){
 			}
 			else {
 			     for(i=0; i<MAX_CLIENT; i++){
-				 if(list_c[i].sock==INVALID_SOCK)	break;
+				 if(list_c[i].sock==INVALID_SOCK)	
+					 break;
 				 write(list_c[i].sock, chatData, n);
 				}
 			}
@@ -129,8 +130,7 @@ int pushClient(int c_socket) {
 	int i, n;
 	char user_name[USERNAME];
 
-	n = read(c_socket, user_name, sizeof(user_name));
-	user_name[n] = "\0";
+	user_name[0] = "\0";
 
 	for(i=0; i<MAX_CLIENT; i++){
 		if(list_c[i].sock==INVALID_SOCK){
@@ -141,22 +141,24 @@ int pushClient(int c_socket) {
 		}
 	}
 	
-	if(i==MAX_CLIENT) return -1;
+	if(i==MAX_CLIENT) 
+		return -1;
 }
 
 int popClient(int c_socket){
-	int i, j;
+	int a, b;
 	
 
-	for(i=0; i<MAX_CLIENT; i++){
-		if(list_c[i].sock == c_socket){
-			printf("[%s]out.\n",list_c[i].name);
-			for(j=i; j<MAX_CLIENT; j++){
-				list_c[i].sock = list_c[j+1].sock;
-				if(list_c[j].sock == INVALID_SOCK) break;
+	for(a=0; a<MAX_CLIENT; a++){
+		if(list_c[a].sock == c_socket){
+			printf("[%s]out.\n",list_c[a].name);
+			for(b=a; b<MAX_CLIENT; b++){
+				list_c[a].sock = list_c[b+1].sock;
+				if(list_c[b].sock == INVALID_SOCK) 
+					break;
 			}
 		}
 	}
 	close(c_socket);
-	return j;
+	return b;
 }
