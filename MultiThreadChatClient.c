@@ -23,13 +23,7 @@ int main(int argc, char *argv[ ])
 {
     int c_socket;
     struct sockaddr_in c_addr;
-    int len;
-    char chatData[CHATDATA];
-    char buf[CHATDATA];
-    int nfds;
-    fd_set read_fds;
-    int n;
-    int status;
+    int status, ch;
 
     c_socket = socket(PF_INET, SOCK_STREAM, 0);
     memset(&c_addr, 0, sizeof(c_addr));
@@ -46,6 +40,10 @@ int main(int argc, char *argv[ ])
 
     write(c_socket, nickname, strlen(nickname));
 
+    printf("Input Channel : ");
+    scanf("%d", &ch);
+    write(c_socket, &ch, sizeof(int));
+    
     //pthread_create with do_send function
     //pthread_create with do_receive_chat function
     //pthread_join both threads

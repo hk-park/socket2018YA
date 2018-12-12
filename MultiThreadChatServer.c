@@ -11,10 +11,12 @@
 #define INVALID_SOCK -1
 #define PORT 9000
 #define USERNAME 256
+#define MAX_CHANNEL 3
 
 struct user{
 	char name[USERNAME];
 	int sock;
+	int ch;
 };
 
 void *do_chat(void *); //채팅 메세지를 보내는 함수
@@ -29,6 +31,8 @@ char    CODE200[ ] = "Sorry No More Connection\n";
 
 pthread_t thread;
 pthread_mutex_t mutex;
+
+int chList[MAX_CHANNEL];
 
 int main(int argc, char *argv[ ])
 {
@@ -62,6 +66,10 @@ int main(int argc, char *argv[ ])
     for(i = 0; i < MAX_CLIENT; i++)
         list_c[i].sock = INVALID_SOCK;
 
+    //channel setting
+    for(i = 0; i < MAX_CHANNEL; i++)
+	chList[i] = i+1;
+	
     while(1) {
         len = sizeof(c_addr);
         c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
@@ -82,16 +90,18 @@ int main(int argc, char *argv[ ])
 void *do_chat(void *arg)
 {
     int c_socket = *((int *)arg);
-    char chatData[CHATDATA], tempData[CHATDATA], userChk[USERNAME];
-    int i, n;
+    char chatData[CHATDATA], sendData[CHATDATA], tempData[CHATDATA];
+    char userChk[USERNAME];
+    int i, n, ch;
     char *chk, *uname, *msg;
 
     while(1) {
         memset(chatData, 0, sizeof(chatData));
         if((n = read(c_socket, chatData, sizeof(chatData))) > 0) {
-	    chk = strtok(chatData, " ");
+	    strcpy(tempData, chatData);
+	    chk = strtok(tempData, " ");
 	    chk = strtok(NULL, " ");
-	    if(strncmp(chk, "/w", 2)==0){
+	    if(strncmp(chk, "/w", 2)==0){	//귓속말
 		uname = strtok(NULL, " ");
 		msg = strtok(NULL, "\0");
 
@@ -106,18 +116,25 @@ void *do_chat(void *arg)
 		//수신자
 		for(i=0; i<MAX_CLIENT; i++){
 			if(strncmp(list_c[i].name, uname, strlen(uname))==0){
-				sprintf(tempData, "[%s] %s", userChk, msg);
-				write(list_c[i].sock, tempData, n);
+				sprintf(sendData, "[%s] %s", userChk, msg);
+				write(list_c[i].sock, sendData, n);
 			}
 		}
             }else if(strstr(chatData, escape) != NULL) {
                 popClient(c_socket);
                 break;
             }else{
-		//write chatData to all clients
+
+		for(i=0; i<MAX_CLIENT; i++){
+			if(list_c[i].sock==c_socket){
+			    ch = list_c[i].ch;
+			    break;
+			}
+		}
+
             	for(i=0; i<MAX_CLIENT; i++){
 			if(list_c[i].sock==INVALID_SOCK)	break;
-			write(list_c[i].sock, chatData, n);
+			if(list_c[i].ch==ch)	write(list_c[i].sock, chatData, n);
 	    	}
 	    }
         }
@@ -127,18 +144,29 @@ void *do_chat(void *arg)
 
 }
 
+
 int pushClient(int c_socket) {
-	int i, n;
+	int i, j, n, ch;
 	char nickname[USERNAME];
 
 	n = read(c_socket, nickname, sizeof(nickname));
 	nickname[n] = '\0';
-
+	n = read(c_socket, &ch, sizeof(int));
 	for(i=0; i<MAX_CLIENT; i++){
 		if(list_c[i].sock==INVALID_SOCK){
 			list_c[i].sock = c_socket;
 			strcpy(list_c[i].name, nickname);
-			printf("[%d] %s 님이 접속하였습니다.\n", i+1, list_c[i].name);
+
+			for(j=0; j<MAX_CHANNEL; j++){
+				if(ch==chList[j]){
+				    list_c[i].ch = ch;
+				    break;
+				}
+			}
+
+			if(j==MAX_CHANNEL)	return -1;
+
+			printf("[%d] %s님이 %d번 방에 접속하였습니다.\n", i+1, list_c[i].name, list_c[i].ch);
 			return i;
 		}
 	}
