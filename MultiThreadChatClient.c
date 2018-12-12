@@ -28,6 +28,12 @@ int main(int argc, char *argv[]) {
 	int nfds;
 	fd_set read_fds;
 	int n;
+	
+	//
+	//
+	int status;
+	//
+	//
 	c_socket = socket(PF_INET, SOCK_STREAM, 0);
 	memset(&c_addr, 0, sizeof(c_addr));
 	
@@ -40,9 +46,27 @@ int main(int argc, char *argv[]) {
 		printf("Can not connect\n");
 		return -1;
 	}
+	//
+	//
 	//pthread_create with do_send function
+	status = pthread_create(&thread_1, NULL, do_send_chat, (void *)&c_socket);
+	if(status) {
+		printf("[ERROR] thread_1 create fail. status = %d\n", status);
+		exit(1);
+	}
+
 	//create with do_receive_chat function
+	status = pthread_create(&thread_2, NULL, do_receive_chat, (void *)&c_socket);
+	if(status) {
+		printf("[ERROR] thread_2 create fail. status = %d\n", status);
+		exit(1);
+	}
 	//join both threads
+	pthread_join(thread_1, NULL);
+	pthread_join(thread_2, NULL);
+	printf("main program end\n");
+	//
+	//
 	close(c_socket);
 }
 
