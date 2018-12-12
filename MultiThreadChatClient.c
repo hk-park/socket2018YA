@@ -10,12 +10,14 @@
 #define CHATDATA 1024
 #define IPADDR "127.0.0.1"
 #define PORT 9000
+
 void *do_send_chat(void *);
 void *do_receive_chat(void *);
 pthread_t thread_1, thread_2;
 char    escape[ ] = "exit";
 char    nickname[20];
 uint8_t    room;
+
 int main(int argc, char *argv[ ])
 {
     int c_socket;
