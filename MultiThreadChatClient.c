@@ -47,6 +47,7 @@ int main(int argc, char *argv[]){
 	n = pthread_create(&thread_1, NULL, doSendChat, (void *)&c_socket);
 	n = pthread_create(&thread_2, NULL, doRcvChat, (void *)&c_socket);
 	pthread_join(thread_1, (void*)&n);
+
 	close(c_socket);
 }
 
