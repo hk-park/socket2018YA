@@ -87,6 +87,9 @@ int main(int argc, char *argv[ ])
 
 int pushClient(int c_socket)
 {
+	int n;
+	char user_name[NAME_LENGTH];
+
 	if (clientCount >= MAX_CLIENT)
 	{
 		printf("클라이언트가 최대 수를 초과하였습니다.\n");
@@ -97,8 +100,13 @@ int pushClient(int c_socket)
 		pthread_create(&thread, NULL, do_chat, (void *)&c_socket);
 		pthread_mutex_lock(&mutex);
 		list_user[clientCount++].c_socket = c_socket;
+		if ((n = read(c_socket, user_name, sizeof(user_name))) > 0)
+		{
+			strcpy(list_user[c_socket].u_name, user_name);
+		}
 		pthread_mutex_unlock(&mutex);
 		printf("%d 개의 클라이언트가 접속하였습니다.\n", clientCount);
+		printf("%s connected !\n", user_name);
 	}
 }
 
@@ -115,44 +123,38 @@ int popClient(int c_socket)
 void *do_chat(void *arg)
 {
 	int c_socket = *((int *)arg);
-	char chatData[CHATDATA];
-	int i, len, using;
+	char chatData[CHATDATA], tempData[CHATDATA];
+	int i, n, len, using;
 	while(1)
 	{
 		memset(chatData, 0, sizeof(chatData));
 		if ((len = read(c_socket, chatData, sizeof(chatData))) > 0)
 		{
+			chatData[strlen(chatData) - 1] = '\0';
+			
+			strcpy(tempData, chatData);
+			char * token = strtok(tempData, " ");
+			char * wSend = strtok(NULL, " ");
+			char * wMesg = strtok(NULL, " ");
+			if (wSend != NULL) printf("%s : send \n", wSend);
+			if (wMesg != NULL) printf("%s : message \n", wMesg);
 			// wirte chatData to all clients
 			// rcvChatData[len] = '\0';
-			for (i = 0; i< MAX_CLIENT; i++)
+			
+			// if (list_user[using].isUse == 0)
+			// {
+			//	list_user[using].isUse = 1;
+			//	printf("client count : %d. \n", using);
+			//	strcpy(list_user[using].u_name, chatData);
+			//	printf("client name : %s. \n", chatData);
+			// }
+			if (wSend != NULL && wMesg != NULL)
 			{
-				if(list_user[i].c_socket == c_socket)
-				{
-					using = i; break;
-				}
-			}
-			if (list_user[using].isUse == 0)
-			{
-				list_user[using].isUse = 1;
-				printf("client count : %d. \n", using);
-				strcpy(list_user[using].u_name, chatData);
-				printf("client name : %s. \n", chatData);
-			}
-			else if (!strncasecmp(chatData, "w ", 2))
-			{
-				int n = 0;
-				char * sendUser;
-				char * wMessage;
-				strtok(chatData, " ");
-				
-				sendUser = strtok(NULL, " ");
-				wMessage = strtok(NULL, "\0");
-				
 				for (n = 0; n < clientCount; n++)
 				{
-					if (!strcmp(list_user[n].u_name, sendUser))
+					if (!strcmp(list_user[n].u_name, wSend))
 					{
-						write(list_user[n].c_socket, wMessage, strlen(wMessage));
+						write(list_user[n].c_socket, wMesg, strlen(wMesg));
 						break;
 					}
 				}
