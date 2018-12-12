@@ -26,7 +26,6 @@ pthread_t th;
 pthread_mutex_t mutex;
 
 user listClient[MAX_CLIENT];
-char escape[] = "/exit";
 char greeting[] = "[NOTICE] Welcome to chatting room\n";
 char CODE200[] = "[NOTICE] Sorry No More Connection\n";
 
@@ -34,8 +33,8 @@ int main(int argc, int *argv[]){
 	int c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
 	int len;
-	int i, j=0;
-	int th_id[100];
+	int i;
+	int th_id;
 	int res;
 
 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
@@ -65,8 +64,7 @@ int main(int argc, int *argv[]){
 		}
 		else{
 			write(c_socket, greeting, strlen(greeting));
-			th_id[j] = pthread_create(&th, NULL, doChat, (void*)&c_socket);
-			j++;
+			th_id = pthread_create(&th, NULL, doChat, (void*)&c_socket);
 		}
 	}
 }
@@ -89,9 +87,13 @@ void *doChat(void *arg){
 		memset(chatData, 0, sizeof(chatData));
 		if((n = read(c_socket, chatData, sizeof(chatData)))>0){
 			sprintf(writeData, "[대화방:%s] %s : %s", room, nickname, chatData);
-			if(strcasecmp(chatData, escape)==0){
+			if(strstr(chatData, "/exit") != NULL){
 				popClient(c_socket);
-				return ;
+				break;
+			}
+			else if(strncasecmp(chatData, "/help", 5)==0){
+				sprintf(writeData, "===도움말===\n  /list  ----- 접속자 보기\n  /w [닉네임] [내용] ----- 귓속말 하기\n  /join [방이름] ----- 대화방 들어가기(기본 대화방 : all)\n  /exit ----- 접속 종료하기\n");
+				write(c_socket, writeData, strlen(writeData));
 			}
 			else if(strncasecmp(chatData, "/list", 5)==0){
 				sprintf(writeData, "===접속자 명단===\n");
@@ -114,18 +116,21 @@ void *doChat(void *arg){
 					}
 				}
 			}
-			else if(strncasecmp(chatData, "/room", 5)==0){
+			else if(strncasecmp(chatData, "/join", 5)==0){
 				strtok(chatData, " ");
-				strcpy(room, strtok(NULL, "\0");
-				sprintf(writeData, "[%s 님이 %s방에 입장하였습니다.]", nickname, room);
+				strcpy(room, strtok(NULL, "\n"));
+				sprintf(writeData, "[%s 님이 %s방에 입장하였습니다. (전체방으로 돌아가기 : /join all)]\n", nickname, room);
 				for(i=0; i<MAX_CLIENT; i++){
 					if(listClient[i].c_socket==c_socket){
 						strcpy(listClient[i].room, room);
 					}
 				}
 				for(i=0; i<MAX_CLIENT; i++){
-					if(strcasecmp(listClient[i].room, room)
-					// point
+					if(strcasecmp(listClient[i].room, room)==0){
+						write(listClient[i].c_socket, writeData, strlen(writeData));
+					}
+				}
+			}
 			else{
 				for(i=0; i<MAX_CLIENT; i++){
 					if(listClient[i].c_socket!=INVALID_SOCK){
@@ -140,8 +145,10 @@ void *doChat(void *arg){
 }
 
 int pushClient(int c_socket){
-	int i;
+	int i, j;
 	char buf[20];
+	char writeData[CHATDATA];
+
 	memset(buf, 0, sizeof(buf));
 	read(c_socket, buf, sizeof(buf));
 	for(i=0; i<MAX_CLIENT; i++){
@@ -151,19 +158,35 @@ int pushClient(int c_socket){
 			strcpy(listClient[i].nickname, buf);
 			memset(listClient[i].room, 0, sizeof(listClient[i].room));
 			strcpy(listClient[i].room, "all");
+			
+			sprintf(writeData, "[%s]님께서 채팅방 프로그램에 접속하셨습니다.! (도움말 /help)\n", buf);
+			for(j=0; j<MAX_CLIENT; j++){
+				if(listClient[j].c_socket!=INVALID_SOCK){
+				write(listClient[j].c_socket, writeData, strlen(writeData));
+				}
+			}
 			return 0;
 		}
 	}
+	
 	return -1;
 }
 
 int popClient(int c_socket){
-	int i;
+	int i, j;
+	char writeData[CHATDATA];
 	for(i=0; i<MAX_CLIENT; i++){
 		if(listClient[i].c_socket==c_socket){
+			sprintf(writeData, "[%s]님께서 채팅 프로그램 접속을 종료하셨습니다!\n", listClient[i].nickname);
+			for(j=0; j<MAX_CLIENT; j++){
+				if(listClient[j].c_socket!=INVALID_SOCK){
+					write(listClient[j].c_socket, writeData, strlen(writeData));
+				}
+			}
 			listClient[i].c_socket = INVALID_SOCK;
-			memset(listClient[i].nickname, 0, sizeof(listClient[i].nickname));
-			memset(listClient[i].room, 0, sizeof(listClient[i].room));
+			strcpy(listClient[i].nickname, "\0");
+			strcpy(listClient[i].room, "\0");
+			
 		}
 	}
 	close(c_socket);
