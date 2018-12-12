@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include <pthread.h>
 
-#define MAX_CLIENT 2
+#define MAX_CLIENT 10
 #define CHATDATA 1024
 #define INVALID_SOCK -1
 #define PORT 9000
@@ -82,16 +82,34 @@ int main(int argc, char *argv[ ])
 void *do_chat(void *arg)
 {
     int c_socket = *((int *)arg);
-    char chatData[CHATDATA];
+    char chatData[CHATDATA], tempData[CHATDATA], userChk[USERNAME];
     int i, n;
-    char *ptr;
+    char *chk, *uname, *msg;
 
     while(1) {
         memset(chatData, 0, sizeof(chatData));
         if((n = read(c_socket, chatData, sizeof(chatData))) > 0) {
+	    chk = strtok(chatData, " ");
+	    chk = strtok(NULL, " ");
+	    if(strncmp(chk, "/w", 2)==0){
+		uname = strtok(NULL, " ");
+		msg = strtok(NULL, "\0");
 
-	    if(chatData[0]=="/"){
-		
+		//송신자
+		for(i=0; i<MAX_CLIENT; i++){
+			if(list_c[i].sock == c_socket){
+				strcpy(userChk, list_c[i].name);
+				break;
+			}
+		}
+
+		//수신자
+		for(i=0; i<MAX_CLIENT; i++){
+			if(strncmp(list_c[i].name, uname, strlen(uname))==0){
+				sprintf(tempData, "[%s] %s", userChk, msg);
+				write(list_c[i].sock, tempData, n);
+			}
+		}
             }else if(strstr(chatData, escape) != NULL) {
                 popClient(c_socket);
                 break;
