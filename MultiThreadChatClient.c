@@ -7,6 +7,8 @@
 #include <sys/select.h>
 #include <pthread.h>
 #include <signal.h>
+#include <pthread.h>
+#include <signal.h>
 #define CHATDATA 1024
 #define IPADDR "127.0.0.1"
 #define PORT 9000
@@ -25,6 +27,8 @@ int main(int argc, char *argv[ ])
     int nfds;
     fd_set read_fds;
     int n;
+	int status;
+
     c_socket = socket(PF_INET, SOCK_STREAM, 0);
     memset(&c_addr, 0, sizeof(c_addr));
     c_addr.sin_addr.s_addr = inet_addr(IPADDR);
@@ -36,9 +40,11 @@ int main(int argc, char *argv[ ])
         printf("Can not connect\n");
         return -1;
     }
-    //pthread_create with do_send function
-    //pthread_create with do_receive_chat function
-    //pthread_join both threads
+    write(c_socket, nickname, strlen(nickname));
+	pthread_create(&thread_1, NULL, do_send_chat, (void*)&c_socket);
+	pthread_create(&thread_2, NULL, do_receive_chat, (void*)&c_socket);
+	pthread_join(thread_1, (void**)&status);
+	pthread_join(thread_1, (void**)&status);
     close(c_socket);
 }
 void * do_send_chat(void *arg)
