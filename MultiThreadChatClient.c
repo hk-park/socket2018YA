@@ -10,6 +10,7 @@
 #define CHATDATA 1024
 #define IPADDR "127.0.0.1"
 #define PORT 9000
+
 void *do_send_chat(void *);
 void *do_receive_chat(void *);
 pthread_t thread_1, thread_2;
@@ -39,6 +40,12 @@ int main(int argc, char *argv[ ])
     //pthread_create with do_send function
     //pthread_create with do_receive_chat function
     //pthread_join both threads
+
+	write(c_socket, nickname, strlen(nickname));
+	pthread_create(&thread_1, NULL, do_send_chat, (void *) &c_socket);
+	pthread_create(&thread_2, NULL, do_receive_chat, (void *) &c_socket);
+	pthread_join(thread_1, NULL);
+	pthread_join(thread_2, NULL);
 
 	close(c_socket);
 }
