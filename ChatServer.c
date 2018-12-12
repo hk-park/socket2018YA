@@ -17,9 +17,14 @@ pthread_mutex_t mutex;
 #define INVALID_SOCK -1
 #define PORT 9000
 
-int    list_c[MAX_CLIENT]; //접속한 클라이언트를 관리하는 배열
+typedef struct clientlist{
+	int c_socket;
+	char nickname[20];
+}clientlist;
+clientlist    client[MAX_CLIENT]; //접속한 클라이언트를 관리하는 배열
 int 	numofcli = 0;
-char    escape[ ] = "quit\n";
+char 	nickname[20];
+char    escape[ ] = "exit";
 char    greeting[ ] = "Welcome to chatting room\n";
 char    CODE200[ ] = "Sorry No More Connection\n";
 
@@ -30,6 +35,8 @@ int main()
 	int   len;
 	int i, j, n;
 	int res;
+
+
 
 	if(pthread_mutex_init(&mutex, NULL) != 0 ){
 		printf("can not create mutex\n");
@@ -50,9 +57,8 @@ int main()
         return -1;
     }
 
-
 	for(i = 0; i<MAX_CLIENT; i++){
-		list_c[i] = INVALID_SOCK;
+		client[i].c_socket = INVALID_SOCK;
 	}
 	while(1) {
 		len = sizeof(c_addr);
@@ -62,7 +68,10 @@ int main()
 		    write(c_socket, CODE200, strlen(CODE200));
 		    close(c_socket);
 		} else {
-			printf("새 클라이언트가 접속함: %d개 접속중\n", ++numofcli);
+			read(c_socket, nickname, sizeof(nickname));
+			strcpy(client[numofcli].nickname, nickname);
+			printf("새 클라이언트가 접속함[%s]: %d개 접속중\n", client[numofcli].nickname, numofcli+1);
+			numofcli++;
 		    write(c_socket, greeting, strlen(greeting));
 			    //pthread_create with do_chat function.
 			pthread_create(&thread, NULL, do_chat, (void*)&c_socket);
@@ -76,18 +85,45 @@ void *do_chat(void *arg)
 {
     int c_socket = *((int *)arg);
     char chatData[CHATDATA];
+	char checkData[CHATDATA];
+	char command[20];
     int i, n;
-	printf("in pthread\n");
+	char *token;
+	char *str[3];
     while(1) {
         memset(chatData, 0, sizeof(chatData));
         if((n = read(c_socket, chatData, sizeof(chatData))) > 0) {
-            //write chatData to all clients
-			for(i = 0; i<numofcli; i++){
-            write(list_c[i], chatData, strlen(chatData));
+
+			printf("유저입력: %s", chatData);
+
+			chatData[n] = '\0';
+			strcpy(command, chatData);
+			token = strtok(command, " ");
+			token = strtok(NULL, "\0");
+			strcpy(command, token);
+			if(strncasecmp(command, "/w", strlen("/w")) == 0){
+				token = strtok(command, " ");
+				str[1] = strtok(NULL, " ");
+				str[2] = strtok(NULL, "\0");
+				for(i=0; i<MAX_CLIENT; i++){
+					if(!strcmp(str[1], client[i].nickname)){
+						sprintf(chatData, "[%s의 귓속말] %s", str[1], str[2]);
+						write(client[i].c_socket, chatData, strlen(chatData));
+						break;
+					}
+					if(i==MAX_CLIENT-1){
+						sprintf(chatData, "[!server!] %s 는 없는 사람입니다!\n", str[1]);
+						write(c_socket, chatData, strlen(chatData));
+					}
+				} 
+			}
+			else{
+				for(i = 0; i<numofcli; i++){
+		    		write(client[i].c_socket, chatData, strlen(chatData));
+				}
 			}
             if(strstr(chatData, escape) != NULL) {
                 popClient(c_socket);
-				  printf("client closed\n");
                 break;
             }
         }
@@ -100,7 +136,7 @@ int pushClient(int c_socket) {
 	if(numofcli == MAX_CLIENT)
 		return -1;
 	else{
-		list_c[numofcli] = c_socket;
+		client[numofcli].c_socket = c_socket;
 		return c_socket;
 	}
     //ADD c_socket to list_c array.
@@ -111,16 +147,20 @@ int pushClient(int c_socket) {
 }
 int popClient(int c_socket)
 {
-	int i;
-	for(i=0; i<MAX_CLIENT; i++){
-		if(list_c[numofcli]==c_socket)
-		    close(c_socket);
-		for(; i>0; i--){
-			list_c[i-1] = list_c[i];
+	int i, j;
+	for(i=0; i<numofcli; i++){
+		if(client[numofcli].c_socket==c_socket){
+			{
+				client[numofcli].c_socket = -1;
+			    close(c_socket);
+				
+				while(client[i+1].c_socket!=-1){
+					client[i].c_socket = client[i+1].c_socket;
+					strcpy(client[i].nickname, client[i].nickname);
+					i++;
+				}
+			}
 		}
 	}
-	printf("Client Closed: %d개 접속중\n", --numofcli);
-    //REMOVE c_socket from list_c array.
-    //
-    ///////////////////////////////////
+	printf("클라이언트 접속 종료: %d개 접속중\n", --numofcli);
 }
