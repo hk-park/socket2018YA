@@ -1,128 +1,163 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <string.h>
 #include <pthread.h>
 
-// 2-1. 서버 프로그램이 사용하는 포트를 9000 --> 10000으로 수정 
+#define MAX_CLIENT 10
+#define CHATDATA 1024
+#define INVALID_SOCK -1
 #define PORT 9000
-//#define PORT 10000
-#define BUFSIZE  10000
-int numClient = 0;
-void *do_service(void *data);
-main( )
-{
-	int   c_socket, s_socket;
+#define USERNAME 256
+
+struct user{
+	char name[USERNAME];
+	int sock;
+};
+
+void *do_chat(void *); //채팅 메세지를 보내는 함수
+int pushClient(int); //새로운 클라이언트가 접속했을 때 클라이언트 정보 추가
+int popClient(int); //클라이언트가 종료했을 때 클라이언트 정보 삭제
+
+//int    list_c[MAX_CLIENT]; //접속한 클라이언트를 관리하는 배열
+struct user list_c[MAX_CLIENT];
+char    greeting[ ] = "WELLCOM! FREAND!! [ /w : 귓속말]\n";
+char    CODE200[ ] = "[ERORR] : CAN NOT CONNECT MORE CLIENT.\n";
+
+pthread_t thread;
+pthread_mutex_t mutex;
+
+int main(int argc, char *argv[]){
+	int c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
-	int   len;
-    pthread_t p_thread;
- 	s_socket = socket(PF_INET, SOCK_STREAM, 0);
+	int len;
+	int i, j, n;
+	int res;
+
+	if(pthread_mutex_init(&mutex, NULL) != 0) {
+		printf("Can not create mutex\n");
+		return -1;
+	}
 	
+	s_socket = socket(PF_INET, SOCK_STREAM, 0);
 	memset(&s_addr, 0, sizeof(s_addr));
-	//s_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	s_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	s_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	s_addr.sin_family = AF_INET;
 	s_addr.sin_port = htons(PORT);
- 
-	if(bind(s_socket, (struct sockaddr *) &s_addr, sizeof(s_addr)) == -1) {
+
+	if(bind(s_socket, (struct sockaddr *)&s_addr, sizeof(s_addr)) == -1) {
 		printf("Can not Bind\n");
 		return -1;
 	}
- 
-	if(listen(s_socket, 5) == -1) {
+
+	if(listen(s_socket, MAX_CLIENT) == -1) {
 		printf("listen Fail\n");
 		return -1;
 	}
- 	
+
+	for(i = 0; i < MAX_CLIENT; i++)
+		list_c[i].sock = INVALID_SOCK;
+
 	while(1) {
 		len = sizeof(c_addr);
 		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-       numClient++;
-       printf("%x is connected\n", pthread_self());
-       printf("%dth client is connected\n", numClient);
-       pthread_create(&p_thread, NULL, do_service, (void *)&c_socket);
-	}	
-	close(s_socket);
+		res = pushClient(c_socket);
+		
+		if(res < 0) {
+			write(c_socket, CODE200, strlen(CODE200));
+			close(c_socket);
+		}
+		else {
+			write(c_socket, greeting, strlen(greeting));
+			pthread_mutex_lock(&mutex);
+			pthread_create(&thread, NULL, do_chat, (void*)&c_socket);
+			pthread_mutex_unlock(&mutex);
+		}
+	}
 }
 
-void *do_service(void *data){
-    int   n;
-    int rcvLen;
-    char buffer[BUFSIZE] = "Hi, I'm server\n";
-    char rcvBuffer[BUFSIZE];
-    int c_socket = *((int *)data);
-    while(1){
-        char *token;
-        char *str[3];
-        int i = 0;
-        rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
-        rcvBuffer[rcvLen] = '\0';
-        printf("[%s] received\n", rcvBuffer);
-        if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
-            break;
-        if(!strncmp(rcvBuffer, "안녕하세요", strlen("안녕하세요")))
-            strcpy(buffer, "안녕하세요. 만나서 반가워요.");
-        else if(!strncmp(rcvBuffer, "이름이 머야?", strlen("이름이 뭐야?")))
-            strcpy(buffer, "내 이름은 박동훈이야");
-        else if(!strncmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?")))
-            strcpy(buffer, "나는 23살이야.");
-        else if(!strncasecmp(rcvBuffer, "strlen ", 7) & strlen(rcvBuffer) > 7)
-            sprintf(buffer, "문자열의 길이는 %d입니다.", strlen(rcvBuffer) -7 );
-        else if(!strncasecmp(rcvBuffer, "strcmp ", 7)){
-            i = 0;
-            token = strtok(rcvBuffer, " ");
-            while(token != NULL){
-                str[i++] = token;
-                token = strtok(NULL, " ");
-            }
-            if(i < 3)
-                sprintf(buffer, "문자열 비교를 위해서는 두 문자열이 필요합니다.");
-            else if(!strcmp(str[1], str[2])) // 문자열이 같다면,
-                sprintf(buffer, "%s와 %s는 같은 문자열입니다.", str[1], str[2]);
-            else
-                sprintf(buffer, "%s와 %s는 다른 문자열입니다.", str[1], str[2]);
-            
-        }else if(!strncasecmp(rcvBuffer, "readfile ", 9)){
-            i = 0;
-            token = strtok(rcvBuffer, " ");
-            //str[0] = readfile
-            //str[1] = 파일명
-            while(token != NULL){
-                str[i++] = token;
-                token = strtok(NULL, " ");
-            }
-            if(i<2)
-                sprintf(buffer, "readfile 기능을 사용하기 위해서는 readfile <파일명> 형태로 입력하시오.");
-            printf("%s\n", str[1]);
-            FILE *fp = fopen(str[1], "r");
-            if(fp){
-                char tempStr[BUFSIZE];
-                memset(buffer, 0, BUFSIZE);
-                while(fgets(tempStr, BUFSIZE, (FILE *)fp)){
-                    strcat(buffer, tempStr);
-                }
-                fclose(fp);
-            }else{
-                sprintf(buffer, "파일이 없습니다.");
-            }
-        }else if(!strncasecmp(rcvBuffer, "exec ", 5)){
-            char *command;
-            token = strtok(rcvBuffer, " ");
-            command = strtok(NULL, "\0");
-            printf("command: %s\n", command);
-            int result = system(command);
-            printf("result: %d\n", result);
-            if(result){
-                sprintf(buffer, "[%s] 명령어가 실패하였습니다.", command);
-            }else{
-                sprintf(buffer, "[%s] 명령어가 성공적으로 수행되었습니다.", command);
-            }
-            
-        }else
-            strcpy(buffer, "무슨 말인지 모르겠습니다.");
-        n = strlen(buffer);
-        write(c_socket, buffer, n);
-    }
-    close(c_socket);
-    numClient--;
+void *do_chat(void *arg){
+	int c_socket = *((int *)arg);
+	char chatData[CHATDATA], tempData[CHATDATA], userChk[USERNAME];
+	int i, n;
+	char *chk, *uname, *msg;
+
+	while(1) {
+		memset(chatData, 0, sizeof(chatData));
+		if((n = read(c_socket, chatData, sizeof(chatData))) > 0) {
+			chk = strtok(chatData, " ");
+			chk = strtok(NULL, " ");
+			
+			if(strncmp(chk, "/w", 2)==0){ 
+			// '/w'을 타이핑 시, 귓속말 기능 수행
+				uname = strtok(NULL, " ");//받는 유저 닉네임
+				msg = strtok(NULL, "\0");//메세지
+				
+				//SEND USER
+				for(i=0; i<MAX_CLIENT; i++){
+					if(list_c[i].sock == c_socket){
+						strcpy(userChk, list_c[i].name);//말하는 유저 이름 복사
+						break;
+					}
+				}
+
+				//RECIEVE USER
+				for(i=0; i<MAX_CLIENT; i++){
+					if(strncmp(list_c[i].name, uname, strlen(uname))==0){
+						sprintf(tempData, "[%s] %s", userChk, msg);//받은 메세지 출력
+						write(list_c[i].sock, tempData, n);
+					}
+				}
+			}
+		
+			else if(!strncasecmp(chatData,"exit ",5)) {
+				popClient(c_socket);
+				break;
+			}
+			else {
+			     for(i=0; i<MAX_CLIENT; i++){
+				 if(list_c[i].sock==INVALID_SOCK)	break;
+				 write(list_c[i].sock, chatData, n);
+				}
+			}
+		}
+	}
 }
+
+int pushClient(int c_socket) {
+	int i, n;
+	char user_name[USERNAME];
+
+	n = read(c_socket, user_name, sizeof(user_name));
+	user_name[n] = "\0";
+
+	for(i=0; i<MAX_CLIENT; i++){
+		if(list_c[i].sock==INVALID_SOCK){
+			list_c[i].sock = c_socket;
+			strcpy(list_c[i].name, user_name);
+			printf("[%d] %s 님이 대화방에 방문 하셨습니다.\n", i+1, list_c[i].name);
+			return i;
+		}
+	}
+	
+	if(i==MAX_CLIENT) return -1;
+}
+
+int popClient(int c_socket){
+	int i, j;
+	close(c_socket);
+
+	for(i=0; i<MAX_CLIENT; i++){
+		if(list_c[i].sock == c_socket){
+			printf("[%d] %s 님이 대화방에서 나갔습니다.\n",i+1, list_c[i].name);
+			for(j=i; j<MAX_CLIENT; j++){
+				list_c[i].sock = list_c[j+1].sock;
+				if(list_c[j].sock == INVALID_SOCK) break;
+			}
+		}
+	}
+	return j;
+}
+
