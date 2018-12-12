@@ -10,6 +10,7 @@ int pushClient(int); //새로운 클라이언트가 접속했을 때 클라이�
 int popClient(int); //클라이언트가 종료했을 때 클라이언트 정보 삭제
 pthread_t thread;
 pthread_mutex_t mutex;
+
 #define MAX_CLIENT 10
 #define CHATDATA 1024
 #define INVALID_SOCK -1
