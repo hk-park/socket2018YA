@@ -23,6 +23,7 @@ pthread_mutex_t mutex;
 
 struct user
 {
+	int isUse;
 	int c_socket;
 	char u_name[NAME_LENGTH];
 };
@@ -114,31 +115,44 @@ int popClient(int c_socket)
 void *do_chat(void *arg)
 {
 	int c_socket = *((int *)arg);
-	char chatData[CHATDATA], rcvChatData[CHATDATA];
-	int i, len;
+	char chatData[CHATDATA];
+	int i, len, using;
 	while(1)
 	{
 		memset(chatData, 0, sizeof(chatData));
 		if ((len = read(c_socket, chatData, sizeof(chatData))) > 0)
 		{
 			// wirte chatData to all clients
-			rcvChatData[len] = '\0';
-			if (!strncasecmp(rcvChatData, "w ", 2))
+			// rcvChatData[len] = '\0';
+			for (i = 0; i< MAX_CLIENT; i++)
 			{
-				int i = 0, n = 0;
-				char *str[3];
-				char *token = strtok(rcvChatData, " ");
-				while(token != NULL)
+				if(list_user[i].c_socket == c_socket)
 				{
-					str[i++] = token;
-					token = strtok(NULL, " ");
+					using = i; break;
 				}
-
+			}
+			if (list_user[using].isUse == 0)
+			{
+				list_user[using].isUse = 1;
+				printf("client count : %d. \n", using);
+				strcpy(list_user[using].u_name, chatData);
+				printf("client name : %s. \n", chatData);
+			}
+			else if (!strncasecmp(chatData, "w ", 2))
+			{
+				int n = 0;
+				char * sendUser;
+				char * wMessage;
+				strtok(chatData, " ");
+				
+				sendUser = strtok(NULL, " ");
+				wMessage = strtok(NULL, "\0");
+				
 				for (n = 0; n < clientCount; n++)
 				{
-					if (!strcmp(list_user[n].u_name, str[1]))
+					if (!strcmp(list_user[n].u_name, sendUser))
 					{
-						write(list_user[n].c_socket, str[2], strlen(str[2]));
+						write(list_user[n].c_socket, wMessage, strlen(wMessage));
 						break;
 					}
 				}
