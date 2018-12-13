@@ -16,7 +16,7 @@ pthread_mutex_t mutex;
 #define MAX_CLIENT 10
 #define CHATDATA 1024
 #define INVALID_SOCK -1
-#define PORT 9004
+#define PORT 9006
 
 
 struct user {
@@ -118,7 +118,7 @@ void *do_chat(void *arg) {
 				receive = strtok(chatData, " ");
 				whisper = strtok(NULL, "/w ");
 			//	whisper = strtok(NULL, "/ㅈ ");
-				send = strtok(NULL, " ");
+				send = strtok(NULL, "\n");
 				for(i=0; i<MAX_CLIENT; i++) {
 					if(strcmp(userList[i].list_clientName, whisper) == 0) {
 						write(userList[i].list_c, chatData, strlen(chatData));
