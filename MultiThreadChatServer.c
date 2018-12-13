@@ -16,10 +16,17 @@ pthread_mutex_t mutex;
 #define MAX_CLIENT 10
 #define CHATDATA 1024
 #define INVALID_SOCK -1
-#define PORT 9000
+#define PORT 9004
 
-int list_c[MAX_CLIENT];
-char userName[CHATDATA] = " ";
+
+struct user {
+	int list_c;	//이전의 list_c 배열과 동
+	char list_clientName[CHATDATA];
+};
+struct user userList[MAX_CLIENT];
+// int list_c[MAX_CLIENT];
+// char userName[CHATDATA] = " ";
+
 char escape[] = "exit";
 char greeting[] = "Welcome to chatting room\n";
 char CODE200[] = "Sorry No More Connection\n";
@@ -55,7 +62,7 @@ int main(int argc, char *argv[]) {
 		return -1;
 	}
 
-	for(i=0; i<MAX_CLIENT; i++)	list_c[i] = INVALID_SOCK;
+	for(i=0; i<MAX_CLIENT; i++)	userList[i].list_c = INVALID_SOCK;
 
 	while(1) {
 		len = sizeof(c_addr);
@@ -66,9 +73,16 @@ int main(int argc, char *argv[]) {
 			close(c_socket);
 		} else { //클라이언트가 정상적으로 접속했다면
 			write(c_socket, greeting, strlen(greeting)); //환영의 문구를 출력
+			//pthread_create with do_chat function
 			status = pthread_create(&thread, NULL, do_chat, (void *)&c_socket);
 
-			//pthread_create with do_chat function
+			if(status) {
+				printf("[ERROR] thread create fail. status = %d\n", status);
+				exit(1);
+			}
+			//
+			//
+			//
 		}
 	}
 }
@@ -76,33 +90,41 @@ int main(int argc, char *argv[]) {
 void *do_chat(void *arg) {
 	int c_socket = *((int *)arg);
 	char chatData[CHATDATA];
-
+	char tempData[CHATDATA];
 	//
-	char *uName, *chat;
+
+	char *temp, *send, *whisper, *receive;
 	//
 	int i, n;
 	while(1) {
 		memset(chatData, 0, sizeof(chatData));
 		if((n=read(c_socket, chatData, sizeof(chatData))) > 0) {
-			//
 			//write chatData to all clients
 			chatData[n] = '\0';
-			printf("%s", chatData);
-			uName = strtok(chatData, " ");
-			chat = strtok(NULL, " ");
-			for(i=0; i<MAX_CLIENT; i++) {
-				write(userName, chat, sizeof(chat));
-				if(chat == NULL) {
-					for(i=0; i<MAX_CLIENT; i++) {
-						if(userName != INVALID_SOCK)	write(userName, chatData, n);
+			//printf("%s", chatData);
+			strcpy(tempData, chatData);
+			temp = strstr(tempData, "/w");
+			// temp = strstr(tempData, "/ㅈ");
+			if(temp == NULL) {
+				for(i=0; i<MAX_CLIENT; i++) {
+					if(userList[i].list_c != INVALID_SOCK && userList[i].list_c != c_socket)
+						write(userList[i].list_c, chatData, n);
+				}
+					if(strstr(chatData, escape) != NULL) { //사용자가 exit라 입력시
+						popClient(c_socket); //Client를 내보냄
+						break;
+					}
+			} else {
+				receive = strtok(chatData, " ");
+				whisper = strtok(NULL, "/w ");
+			//	whisper = strtok(NULL, "/ㅈ ");
+				send = strtok(NULL, " ");
+				for(i=0; i<MAX_CLIENT; i++) {
+					if(strcmp(userList[i].list_clientName, whisper) == 0) {
+						write(userList[i].list_c, chatData, strlen(chatData));
+						write(userList[i].list_c, send, strlen(send));
 					}
 				}
-			}
-			//
-			//////////////////////////////
-			if(strstr(chatData, escape) != NULL) { //사용자가 exit라 입력시
-				popClient(c_socket); //Client를 내보냄
-				break;
 			}
 		}
 	}
@@ -111,20 +133,20 @@ void *do_chat(void *arg) {
 int pushClient(int c_socket) {
 	//
 	int i;
-	char uName[CHATDATA];
+	char push[CHATDATA];
 
-	memset(uName, 0, sizeof(uName));
+	memset(push, 0, sizeof(push));
 	
 	for(i=0; i<MAX_CLIENT; i++) {
 		pthread_mutex_lock(&mutex);
-		if(list_c[i] == INVALID_SOCK) {
-			list_c[i] = c_socket;
-			if(read(c_socket, uName, sizeof(uName)) > 0)	strcpy(userName, uName);
-			printf("%d %s\n", list_c[i], userName);
+		if(userList[i].list_c == INVALID_SOCK) {
+			userList[i].list_c = c_socket;
+			if(read(c_socket, push, sizeof(push)) > 0)	strcpy(userList[i].list_clientName, push);
+			// printf("%d %s\n", list_c[i], userName);
 			pthread_mutex_unlock(&mutex);
-			
 			return i;
 		}
+		//printf("사용자가 입장하였습니다.\n");
 		pthread_mutex_unlock(&mutex);
 	}
 	
@@ -143,8 +165,9 @@ int popClient(int c_socket) {
 	close(c_socket);
 	for(i=0; i<MAX_CLIENT; i++) {
 		pthread_mutex_lock(&mutex);
-		if(c_socket == list_c[i]) {
-			list_c[i] = INVALID_SOCK;
+		if(c_socket == userList[i].list_c) {
+			userList[i].list_c = INVALID_SOCK;
+			//printf("사용자가 퇴장하였습니다.\n");
 			pthread_mutex_unlock(&mutex);
 			break;
 		}
