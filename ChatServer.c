@@ -2,18 +2,50 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <pthread.h>
 
 // 2-1. 서버 프로그램이 사용하는 포트
 #define PORT 9000
-
+#define BUFSIZE 10000
 // 2-2. 클라이언트가 접속했을 때 보내는 메세지를 변경하려면 buffer을 수정
-char buffer[100] = "Hi, I'm Server.\n";
 
-int main()
+void *do_chat(void *);
+int pushClient(int);
+int popClient(int);
+
+pthread_t thread;
+pthread_mutex_t mutex;
+
+#define MAX_CLIENT 10
+#define CHATDATA 1024
+#define WDATA "/w"
+#define INVALID_SOCK -1
+#define NAME_LENGTH 30
+
+struct user
 {
-	int c_socket, s_socket, rcvLen;		// 변수 선언
+	int isUse;
+	int c_socket;
+	char u_name[NAME_LENGTH];
+};
+
+int clientCount = 0;
+char escape[ ] = "exit";
+char greeting[ ] = "Welcome to chatting room.\n";
+char CODE200[ ] = "Sorry No More Connection. \n";
+struct user list_user[MAX_CLIENT];
+
+int main(int argc, char *argv[ ])
+{
+	int c_socket, s_socket;		// 변수 선언
 	struct sockaddr_in s_addr, c_addr;	// 클라이언트에서 보낸 데이터 받음
-	char rcvBuffer[100];				// 소켓 통신 정보 (구조체)	
+	int i, j, n, res, len;
+
+	if (pthread_mutex_init(&mutex, NULL) != 0)
+	{
+		printf("Can not create mutex \n");
+		return -1;
+	}
 
 	s_socket = socket(PF_INET, SOCK_STREAM, 0);			// 서버 소켓 생성	
 
@@ -32,48 +64,115 @@ int main()
 		return -1;
 	}
 
-	while (1) {
-		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &sizeof(c_addr));
+	for (i = 0; i < MAX_CLIENT; i++)
+		list_user[i].c_socket = INVALID_SOCK;	
 
-		printf("Client is connected\n");
-		while (1) {
-			rcvLen = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
-			rcvBuffer[rcvLen] = '\0';
-			printf("[%s] received\n", rcvBuffer);
-			if (strncasecmp(rcvBuffer, "quit", strlen("quit")) == 0 || strncasecmp(rcvBuffer, "kill server", strlen("kill server")) == 0)
-				break;
-			else if (!strncmp(rcvBuffer, "안녕하세요", strlen("안녕하세요")))
-				strcpy(buffer, "안녕하세요. 만나서 반가워요.");
-			else if (!strncmp(rcvBuffer, "이름이 머야?", strlen("이름이 머야?")))
-				strcpy(buffer, "내 이름은 김건우야.");
-			else if (!strncmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?")))
-				strcpy(buffer, "나는 25살이야.");
-			else if (!strncasecmp(rcvBuffer, "strlen ", strlen("strlen ")))
-				sprintf(buffer, "문자열 길이 : %d", strlen(rcvBuffer) - strlen("strlen "));
-			else if (!strncasecmp(rcvBuffer, "strcmp ", strlen("strcmp "))) {
-				int i = 0;
-				char *split[3];
-				char *ptr = strtok(rcvBuffer, " ");
-				while (ptr != NULL) {
-					split[i++] = ptr;
-					ptr = strtok(NULL, " ");
-				}
-				if (i < 3)
-					sprintf(buffer, "문자열 비교를 위해서는 두 문자열이 필요합니다.");
-				else if (!strcmp(split[1], split[2]))
-					sprintf(buffer, "같은 문자 : 0");
-				else
-					sprintf(buffer, "다른 문자 : -1");
-			}
-			else
-				strcpy(buffer, "Match Type : X");
-
-			write(c_socket, buffer, strlen(buffer));
+	while (1)
+	{
+		len = sizeof(c_addr);
+		c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
+		res = pushClient(c_socket);
+		if (res < 0)
+		{
+			write(c_socket, CODE200, strlen(CODE200));
+			close(c_socket);
 		}
-		close(c_socket);
-		if (!strncasecmp(rcvBuffer, "kill server", 11))
-			break;
+		else
+		{
+			write(c_socket, greeting, strlen(greeting));
+			pthread_create(&thread, NULL, do_chat, (void *)&c_socket);
+		}
 	}
 	close(s_socket);
-	return 0;
+}
+
+int pushClient(int c_socket)
+{
+	int n;
+	char user_name[NAME_LENGTH];
+
+	if (clientCount >= MAX_CLIENT)
+	{
+		printf("클라이언트가 최대 수를 초과하였습니다.\n");
+		return -1;
+	}
+	else
+	{
+		pthread_create(&thread, NULL, do_chat, (void *)&c_socket);
+		pthread_mutex_lock(&mutex);
+		list_user[c_socket].c_socket = c_socket;
+		if ((n = read(c_socket, user_name, sizeof(user_name))) > 0)
+		{
+			strcpy(list_user[c_socket].u_name, user_name);
+		}
+		pthread_mutex_unlock(&mutex);
+		printf("%d 개의 클라이언트가 접속하였습니다.\n", ++clientCount);
+		printf("%s connected !\n", user_name);
+	}
+}
+
+int popClient(int c_socket)
+{
+	pthread_mutex_lock(&mutex);
+	list_user[--clientCount].c_socket = INVALID_SOCK;
+	pthread_mutex_unlock(&mutex);
+	close(c_socket);
+	printf("현재 %d개의 클라이언트가 남아있습니다.\n", clientCount);
+	return -1;
+}
+
+void *do_chat(void *arg)
+{
+	int c_socket = *((int *)arg);
+	char chatData[CHATDATA], tempData[CHATDATA];
+	int i, n, len, using;
+	while(1)
+	{
+		memset(chatData, 0, sizeof(chatData));
+		if ((len = read(c_socket, chatData, sizeof(chatData))) > 0)
+		{
+			// chatData[strlen(chatData) - 1] = '\0';
+			
+			strcpy(tempData, chatData);
+			char * token = NULL, * u_name = NULL, * msg = NULL;
+
+			if (strncasecmp(tempData, WDATA, 2) == 0)
+			{
+				token = strtok(tempData, " ");
+				u_name = strtok(NULL, " ");
+				msg = strtok(NULL, "\0");
+			}
+
+			for (n = 0; n < MAX_CLIENT; n++)
+			{
+				if (list_user[n].c_socket != INVALID_SOCK)
+				{
+					if (u_name != NULL)
+					{
+						if (strcasecmp(list_user[n].u_name, u_name) == 0)
+						{
+							printf("%c : %c \n", list_user[n].u_name, u_name);
+							write(list_user[n].c_socket, msg, strlen(msg));
+						}
+					}
+					else 
+					{
+						write(list_user[n].c_socket, chatData, strlen(chatData));
+					}
+				}
+			}
+//			else
+//			{
+//				for(i = 0; i < clientCount; i++)
+//				{
+//					write(list_user[i].c_socket, chatData, strlen(chatData));
+//				}
+//			}
+			if (strstr(chatData, escape) != NULL)
+			{
+				popClient(c_socket);
+				break;
+			}
+		}
+	}
 }
