@@ -14,9 +14,10 @@ pthread_mutex_t mutex;
 #define CHATDATA 1024
 #define INVALID_SOCK -1
 #define PORT 9000
+#define USERNAME 100
 struct user{
 	int c_socket;
-	char c_name[20];
+	char c_name[USERNAME];
 };//접속한 클라이언트 관리구조체
 
 struct   user  list_c[MAX_CLIENT]; 
@@ -58,7 +59,9 @@ int main(int argc, char *argv[ ])
             close(c_socket);
         } else {
             write(c_socket, greeting, strlen(greeting));
-            pthead_create(&thread, NULL, do_chat, (void *) &c_socket);
+            pthread_mutex_lock(&mutex);
+            pthread_create(&thread, NULL, do_chat, (void *) &c_socket);
+	    	pthread_mutex_unlock(&mutex);
         }
     }
 }
@@ -72,7 +75,7 @@ void *do_chat(void *arg)
         memset(chatData, 0, sizeof(chatData));
         if((n = read(c_socket, chatData, sizeof(chatData))) > 0) {
             ptr = strstr(chatData, "/w"); //w가 위치한 포인터 저장
-            if(strstr(chatData, escape) != NULL) {
+            if(ptr!=NULL) {//w포인터가 존재할경우
 		ptr = strtok(chatData, " ");//토큰내용 : "[보낸사람 닉네임]
 		ptrSender = ptr;
 		ptr = strtok(NULL, " ");//토큰내용 : "/W"
