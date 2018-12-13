@@ -39,6 +39,11 @@ int main(int argc, char *argv[ ])
     //pthread_create with do_send function
     //pthread_create with do_receive_chat function
     //pthread_join both threads
+	write(c_socket, nickname, strlen(nickname));
+	pthread_create(&thread_1, NULL, do_send_chat, (void *)&c_socket);
+	pthread_create(&thread_2, NULL, do_receive_chat, (void *)&c_socket);
+	pthread_join(thread_1, (void **)&nfds);
+	pthread_join(thread_2, (void **)&nfds);
     close(c_socket);
 }
 void * do_send_chat(void *arg)
@@ -61,7 +66,7 @@ void * do_send_chat(void *arg)
 }
 void *do_receive_chat(void *arg)
 {
-    char    chatData[CHATDATA];
+    char   chatData[CHATDATA];
     int    n;
     int    c_socket = *((int *)arg);        // client socket
     while(1) {
