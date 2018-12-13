@@ -25,9 +25,7 @@ int main(int argc, char *argv[ ])
     int nfds;
     fd_set read_fds;
     int n;
-	int status;
-	pthread_t thread_send;
-	pthread_t thread_receive;
+
     c_socket = socket(PF_INET, SOCK_STREAM, 0);
     memset(&c_addr, 0, sizeof(c_addr));
     c_addr.sin_addr.s_addr = inet_addr(IPADDR);
@@ -39,6 +37,7 @@ int main(int argc, char *argv[ ])
         printf("Can not connect\n");
         return -1;
     }
+	write(c_socket, nickname, strlen(nickname));
     //pthread_create with do_send function
 	pthread_create(&thread_1, NULL, do_send_chat, (void *)&c_socket);
     //pthread_create with do_receive_chat function
