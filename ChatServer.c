@@ -20,6 +20,7 @@ pthread_mutex_t mutex;
 typedef struct clientlist{
 	int c_socket;
 	char nickname[20];
+	char roomname[20];
 }clientlist;
 clientlist    client[MAX_CLIENT]; //접속한 클라이언트를 관리하는 배열
 int 	numofcli = 0;
@@ -59,6 +60,7 @@ int main()
 
 	for(i = 0; i<MAX_CLIENT; i++){
 		client[i].c_socket = INVALID_SOCK;
+		strcpy(client[i].roomname, "default");
 	}
 	while(1) {
 		len = sizeof(c_addr);
@@ -88,6 +90,8 @@ void *do_chat(void *arg)
 	char checkData[CHATDATA];
 	char command[20];
     int i, n;
+	int mynumber;
+	char myroom[20];
 	char *token;
 	char *str[3];
     while(1) {
@@ -101,6 +105,13 @@ void *do_chat(void *arg)
 			token = strtok(command, " ");
 			token = strtok(NULL, "\0");
 			strcpy(command, token);
+			for(i=0; i<MAX_CLIENT; i++){
+					if(client[i].c_socket==c_socket){
+						mynumber = i;
+						strcpy(myroom, client[mynumber].roomname);
+						break;
+					}						
+				}
 			if(strncasecmp(command, "/w", strlen("/w")) == 0){
 				token = strtok(command, " ");
 				str[1] = strtok(NULL, " ");
@@ -116,9 +127,16 @@ void *do_chat(void *arg)
 						write(c_socket, chatData, strlen(chatData));
 					}
 				} 
+			} else if(strncasecmp(command, "/move", strlen("/move")) == 0){				
+				token = strtok(command, " ");
+				str[1] = strtok(NULL, "\n");
+              sprintf(chatData, "[!server!] 채팅방 %s 에서 %s 로 이동\n", client[mynumber].roomname, str[1]);
+				write(c_socket, chatData, strlen(chatData));
+				strcpy(client[mynumber].roomname, str[1]);
 			}
 			else{
 				for(i = 0; i<numofcli; i++){
+					if( !strcmp(client[i].roomname, myroom))
 		    		write(client[i].c_socket, chatData, strlen(chatData));
 				}
 			}
