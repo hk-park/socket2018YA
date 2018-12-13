@@ -15,6 +15,7 @@ void *do_receive_chat(void *);
 pthread_t thread_1, thread_2;
 char    escape[ ] = "exit";
 char    nickname[20];
+int	room_num;
 int main(int argc, char *argv[ ])
 {
     int c_socket;
@@ -40,6 +41,9 @@ int main(int argc, char *argv[ ])
     //pthread_create with do_receive_chat function
     //pthread_join both threads
 	write(c_socket, nickname, strlen(nickname));
+	printf("Input ChattingRoom Number : ");
+	scanf("%d", &room_num);
+	write(c_socket, &room_num, sizeof(int));
 	pthread_create(&thread_1, NULL, do_send_chat, (void *)&c_socket);
 	pthread_create(&thread_2, NULL, do_receive_chat, (void *)&c_socket);
 	pthread_join(thread_1, (void **)&nfds);

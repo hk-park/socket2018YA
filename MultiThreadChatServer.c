@@ -18,6 +18,7 @@ pthread_mutex_t mutex;
 
 typedef struct user_info{
 	int socket;
+	int room_num;
 	char nickname[NAMELEN]; //접속한 클라이언트의 닉네임
 }client_info;
 char escape[ ] = "exit";
@@ -57,15 +58,6 @@ int main(int argc, char *argv[ ])
         len = sizeof(c_addr);
         c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
         res = pushClient(c_socket); //접속한 클라이언트를 list_c에 추가
-		for(i=0; i<MAX_CLIENT; i++){
-			pthread_mutex_lock(&mutex);
-			if(client[i].socket == c_socket){
-				read(c_socket, client[i].nickname, sizeof(client[i].nickname));				
-				pthread_mutex_unlock(&mutex);
-				break;
-			}
-			pthread_mutex_unlock(&mutex);
-		}
         if(res < 0) { //MAX_CLIENT만큼 이미 클라이언트가 접속해 있다면,
             write(c_socket, CODE200, strlen(CODE200));
             close(c_socket);
@@ -81,7 +73,7 @@ void *do_chat(void *arg)
     int c_socket = *((int *)arg);
     char chatData[CHATDATA];
 	char whisper[CHATDATA];
-    int i, n;
+    int i, n, room_num;
 	char *token;
 	char *str[3];
 	
@@ -111,9 +103,23 @@ void *do_chat(void *arg)
 			}
 			else{
 				for(i=0; i<MAX_CLIENT; i++){
-				if(client[i].socket != INVALID_SOCK)
-					write(client[i].socket, chatData, n);
+					if(client[i].socket == c_socket){
+						pthread_mutex_lock(&mutex);
+						room_num = client[i].room_num;
+						pthread_mutex_unlock(&mutex);
+						break;
+					}
 				}
+			}
+			if(strncasecmp(whisper, "/w", strlen("/w")) != 0){
+				for(i=0; i<MAX_CLIENT; i++){
+					pthread_mutex_lock(&mutex);
+						if(client[i].socket != INVALID_SOCK){
+							if(client[i].room_num == room_num)
+								write(client[i].socket, chatData, strlen(chatData));
+						}
+					pthread_mutex_unlock(&mutex);
+					}
 			}
 			if(strstr(chatData, escape) != NULL) {
 				popClient(c_socket);
@@ -125,11 +131,12 @@ void *do_chat(void *arg)
 int pushClient(int c_socket) {
 	int i=0;
 	
-	
 	for(i = 0; i < MAX_CLIENT; i++){
 		pthread_mutex_lock(&mutex);
 		if(client[i].socket == INVALID_SOCK){
 			client[i].socket = c_socket;
+			read(c_socket, client[i].nickname, sizeof(client[i].nickname));
+			read(c_socket, &client[i].room_num, sizeof(int));
 			pthread_mutex_unlock(&mutex);
 			return i;
 		}
