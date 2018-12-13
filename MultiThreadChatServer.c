@@ -104,16 +104,22 @@ void *do_chat(void *arg)
 			else{
 				for(i=0; i<MAX_CLIENT; i++){
 					if(client[i].socket == c_socket){
+						pthread_mutex_lock(&mutex);
 						room_num = client[i].room_num;
+						pthread_mutex_unlock(&mutex);
 						break;
 					}
 				}
 			}
-			for(i=0; i<MAX_CLIENT; i++){
-				if(client[i].socket != INVALID_SOCK){
-					if(client[i].room_num == room_num)
-						write(client[i].socket, chatData, strlen(chatData));
-				}
+			if(strncasecmp(whisper, "/w", strlen("/w")) != 0){
+				for(i=0; i<MAX_CLIENT; i++){
+					pthread_mutex_lock(&mutex);
+						if(client[i].socket != INVALID_SOCK){
+							if(client[i].room_num == room_num)
+								write(client[i].socket, chatData, strlen(chatData));
+						}
+					pthread_mutex_unlock(&mutex);
+					}
 			}
 			if(strstr(chatData, escape) != NULL) {
 				popClient(c_socket);
