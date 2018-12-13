@@ -76,9 +76,7 @@ int main(int argc, char *argv[ ])
             close(c_socket);
         } else {
             write(c_socket, greeting, strlen(greeting));
-            pthread_mutex_lock(&mutex);
             pthread_create(&thread, NULL, do_chat, (void*)&c_socket);
-	   		 pthread_mutex_unlock(&mutex);
         }
     }
 }
@@ -143,6 +141,8 @@ int pushClient(int c_socket) {
 	n = read(c_socket, nickname, sizeof(nickname));
 	nickname[n] = '\0';
 	n = read(c_socket, &ch, sizeof(int));
+
+    pthread_mutex_lock(&mutex);
 	for(i=0; i<MAX_CLIENT; i++){
 		if(list_c[i].sock==INVALID_SOCK){
 			list_c[i].sock = c_socket;
@@ -161,16 +161,15 @@ int pushClient(int c_socket) {
 			return i;
 		}
 	}
-
+	pthread_mutex_unlock(&mutex);
 	if(i==MAX_CLIENT)	return -1;
 }
 
 int popClient(int c_socket)
 {
-	int i, j;
+	int i, j;	
 
-	close(c_socket);
-
+    pthread_mutex_lock(&mutex);
 	for(i=0; i<MAX_CLIENT; i++){
 		if(list_c[i].sock==c_socket){
 			printf("%s님이 퇴장하셨습니다.\n", list_c[i].name);
@@ -180,5 +179,7 @@ int popClient(int c_socket)
 			}
 		}
 	}
+	pthread_mutex_unlock(&mutex);
+    close(c_socket);
 	return j;
 }
