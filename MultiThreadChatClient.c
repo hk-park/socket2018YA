@@ -29,7 +29,7 @@ int main(int argc, char *argv[ ])
     int nfds;
     fd_set read_fds;
     int n;
-    int status;
+    int status, ch;
 
     c_socket = socket(PF_INET, SOCK_STREAM, 0);
     memset(&c_addr, 0, sizeof(c_addr));
@@ -60,6 +60,7 @@ void * do_send_chat(void *arg)
     char buf[CHATDATA];
     int n;
     int c_socket = *((int *) arg);
+
     while(1) {
         memset(buf, 0, sizeof(buf));
         if((n = read(0, buf, sizeof(buf))) > 0 ) {
