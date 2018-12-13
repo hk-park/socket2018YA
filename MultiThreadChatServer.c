@@ -15,7 +15,6 @@
 struct user{
 	char name[USERNAME];
 	int sock;
-	int ch;
 };
 
 void *do_chat(void *); //채팅 메세지를 보내는 함수
@@ -23,7 +22,6 @@ int pushClient(int); //새로운 클라이언트가 접속했을 때 클라이�
 int popClient(int); //클라이언트가 종료했을 때 클라이언트 정보 삭제
 
 struct user list_c[MAX_CLIENT];
-
 char    greeting[ ] = "WELLCOM! FREAND!! [ /w : 귓속말]\n";
 char    CODE200[ ] = "[ERORR] : CAN NOT CONNECT MORE CLIENT.\n";
 
@@ -83,14 +81,13 @@ int main(int argc, char *argv[]){
 
 void *do_chat(void *arg){
 	int c_socket = *((int *)arg);
-	char chatData[CHATDATA], tempData[CHATDATA], userChk[USERNAME], sendData[CHATDATA];
-	int i, n,ch;
+	char chatData[CHATDATA], tempData[CHATDATA], userChk[USERNAME];
+	int i, n;
 	char *chk, *uname, *msg;
 
 	while(1) {
 		memset(chatData, 0, sizeof(chatData));
 		if((n = read(c_socket, chatData, sizeof(chatData))) > 0) {
-			strcpy(tempData, chatData);
 			chk = strtok(chatData, " ");
 			chk = strtok(NULL, " ");
 			
@@ -110,8 +107,8 @@ void *do_chat(void *arg){
 				//RECIEVE USER
 				for(i=0; i<MAX_CLIENT; i++){
 					if(strncmp(list_c[i].name, uname, strlen(uname))==0){
-						sprintf(sendData, "[%s] %s", userChk, msg);//받은 메세지 출력
-						write(list_c[i].sock, sendData, n);
+						sprintf(tempData, "[%s] %s", userChk, msg);//받은 메세지 출력
+						write(list_c[i].sock, tempData, n);
 					}
 				}
 			}
@@ -121,19 +118,10 @@ void *do_chat(void *arg){
 				break;
 			}
 			else {
-			     for(i=0; i<MAX_CLIENT; i++){ 
-	  			if(list_c[i].sock==c_socket){ 
-	  			    ch = list_c[i].ch; 
-	  			    break; 
-	  			} 
-	 		} 
-	
- 
-	     	for(i=0; i<MAX_CLIENT; i++){ 
-		 			if(list_c[i].sock==INVALID_SOCK)	break; 
-	 				if(list_c[i].ch==ch)	write(list_c[i].sock, chatData, n); 
+			     for(i=0; i<MAX_CLIENT; i++){
+				 if(list_c[i].sock==INVALID_SOCK)	break;
+				 write(list_c[i].sock, chatData, n);
 				}
-
 			}
 		}
 	}
