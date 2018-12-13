@@ -12,6 +12,8 @@
 #define PORT 9000
 
 
+
+
 void *do_send_chat(void *);
 void *do_receive_chat(void *);
 pthread_t thread_1, thread_2;

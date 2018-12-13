@@ -77,6 +77,8 @@ int main(int argc, char *argv[]){
 	}
 }
 
+
+
 void *do_chat(void *arg){
 	int c_socket = *((int *)arg);
 	
