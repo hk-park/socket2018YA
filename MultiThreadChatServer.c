@@ -17,24 +17,24 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 #define PORT 9000
 int num[3]={0,};
 struct list {
-	int id;
-	char nickname[CHATDATA];
+    int id;
+    char name[CHATDATA];
 };		
-char nick[CHATDATA];
+char    nick[CHATDATA];
 struct list list_c[MAX_PLACE][MAX_CLIENT];
-char test[1024];
+char    whisper[1024];
 char    escape[ ] = "exit";
 char    greeting[ ] = "Welcome to chatting room\n";
 char    CODE200[ ] = "Sorry No More Connection\n";
-char	three[]="1~3번 방 중 선택.\n";
-char placenum[10];
+char	room[]="select room 1~3.\n";
+char    roomNum[5];
 
 int main(int argc, char *argv[ ])
 {
     int c_socket, s_socket;
     struct sockaddr_in s_addr, c_addr;
     int    len;
-    int    i, j, n, g;
+    int    i, j, n;
     int    res;
 	
 
@@ -62,22 +62,19 @@ int main(int argc, char *argv[ ])
     while(1) {
         len = sizeof(c_addr);
         c_socket = accept(s_socket, (struct sockaddr *) &c_addr, &len);
-		g=read(c_socket,nick,sizeof(nick));
-		write(c_socket,three,strlen(three));
-		g=read(c_socket,placenum,sizeof(placenum));
+	read(c_socket,nick,sizeof(nick));
+	write(c_socket,room,strlen(room));
+	read(c_socket,roomNum,sizeof(roomNum));
 
-        res = pushClient(c_socket,nick,atoi(placenum)-1);
+        res = pushClient(c_socket,nick,atoi(roomNum)-1);
 		
-		 if(res < 0) {
+	if(res < 0) {
             write(c_socket, CODE200, strlen(CODE200));
             close(c_socket);
         } else {		
-			printf("%d대화방 : 현재 접속중인 인원은 %d명 입니다.\n",atoi(placenum),num[atoi(placenum)-1]);
             write(c_socket, greeting, strlen(greeting));
-            
-			pthread_create(&thread,NULL,do_chat,(void *)&c_socket);
-		}
-        
+	    pthread_create(&thread,NULL,do_chat,(void *)&c_socket);
+	} 
     }
 }
 
@@ -85,72 +82,72 @@ void *do_chat(void *arg)
 {
     int c_socket = *((int *)arg);
     char chatData[CHATDATA];
-    int i, n;
-	int place=atoi(placenum)-1;
+    int i, n, j;
+    int place=atoi(roomNum)-1;
     while(1) {
         memset(chatData, 0, sizeof(chatData));
         if((n = read(c_socket, chatData, sizeof(chatData))) > 0) {	
-				if(!strncasecmp(chatData,"/w",strlen("/w"))) {
-					char *token;
-					char *str[4];
-					int i = 0;
-					token = strtok(chatData, " ");
-					while(token != NULL){
-					str[i++] = token;
-					token = strtok(NULL, " ");
-					}			
-					for(i=0;i<10;i++) {
-						if(!strncmp(list_c[place][i].nickname,str[1],strlen(str[1]))) {
-							sprintf(test,"[whisper] %s님 : %s",str[3],str[2]);
-							
-							write(list_c[place][i].id,test,strlen(test));
-						}
-					}
-				 } else {
-					for(i=0;i<MAX_CLIENT;i++) {
-						write(list_c[place][i].id,chatData,n);
-					}
-				}
+	    if(!strncasecmp(chatData,"/w",strlen("/w"))) {
+		char *token;
+		char *str[4];
+		int i = 0;
+		token = strtok(chatData, " ");
+		while(token != NULL){
+		    str[i++] = token;
+		    token = strtok(NULL, " ");
+		}			
+		for(i=0;i<10;i++) {
+		    for(j=0;j<3;j++){
+		        if(!strncmp(list_c[j][i].name,str[1],strlen(str[1]))) {
+			    sprintf(whisper,"[whisper:%s] : %s",str[3],str[2]);				
+			    write(list_c[j][i].id,whisper,strlen(whisper));
+		        }
+		    }
+		}
+	    } else {
+		for(i=0;i<MAX_CLIENT;i++) {
+		    write(list_c[place][i].id,chatData,n);
+	    	}
+	    }
             if(strstr(chatData, escape) != NULL) {
                 popClient(c_socket,place);
                 break;
-            		}
+	    }
         }
     }
 }
-int pushClient(int c_socket,char * nickname,int placenum) {
+int pushClient(int c_socket,char * name,int roomNum) {
 	int result;
 	int i;
     
-	if(num[placenum]>=MAX_CLIENT) {
+	if(num[roomNum]>=MAX_CLIENT) {
 		return -1;
 	} else {
 		for(i=0;i<MAX_CLIENT;i++) {
-			if(list_c[placenum][i].id==-1) {
-				result=i;
-				strcpy(list_c[placenum][result].nickname,nickname);
-				break;
-			}
+		    if(list_c[roomNum][i].id==-1) {
+			result=i;
+			strcpy(list_c[roomNum][result].name,name);
+			break;
+		    }
 		}
-		pthread_mutex_lock(&mutex);
-		list_c[placenum][result].id=c_socket;
-		num[placenum]++;
-		pthread_mutex_unlock(&mutex);
-		return 0;
+	    pthread_mutex_lock(&mutex);
+	    list_c[roomNum][result].id=c_socket;
+	    num[roomNum]++;
+	    pthread_mutex_unlock(&mutex);
+	    return 0;
 	}
 }
 
-int popClient(int c_socket,int placenum)
+int popClient(int c_socket,int roomNum)
 {
 	int i;
 	pthread_mutex_lock(&mutex);
-	 for(i=0;i<MAX_CLIENT;i++) {	
-		if(list_c[placenum][i].id==c_socket) {
-			list_c[placenum][i].id=INVALID_SOCK;
-		}	
+	for(i=0;i<MAX_CLIENT;i++) {	
+	    if(list_c[roomNum][i].id==c_socket) {
+		list_c[roomNum][i].id=INVALID_SOCK;
+	    }	
 	}
-	num[placenum]--;
-	printf("%d대화방 : 현재 접속중인 인원은 %d명 입니다.\n",placenum,num[placenum]);
+	num[roomNum]--;
 	pthread_mutex_unlock(&mutex);
 	close(c_socket);
 }
