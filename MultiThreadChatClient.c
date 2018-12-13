@@ -11,16 +11,15 @@
 
 #define CHATDATA 1024
 #define IPADDR "127.0.0.1"
-#define PORT 9000
+#define PORT 13000
 
 void *do_send_chat(void *);
 void *do_receive_chat(void *);
 
-pthread_t thread_1, thread_2;
+pthread_t thread_1, thread_2, thread_3;
 
 char escape[] = "exit";
 char nickname[20];
-
 int main(int argc, char *argv[])
 {
 	int c_socket;
@@ -45,10 +44,11 @@ int main(int argc, char *argv[])
 		printf("Can not connect\n");
 		return -1;
 	}
+	write(c_socket, nickname, strlen(nickname));
 	
 	pthread_create(&thread_1, NULL, do_send_chat, (void *) &c_socket);
 	pthread_create(&thread_2, NULL, do_receive_chat, (void *) &c_socket);
-
+	
 	pthread_join(thread_1, NULL);
 	pthread_join(thread_2, NULL);	
 	close(c_socket);
@@ -86,7 +86,7 @@ void *do_receive_chat(void *arg)
 		memset(chatData, 0, sizeof(chatData));
 		if((n= read(c_socket, chatData, sizeof(chatData))) > 0)
 		{
-			write(1, chatData, n);
+			write(1,chatData, n);
 		}
 	}
 }
