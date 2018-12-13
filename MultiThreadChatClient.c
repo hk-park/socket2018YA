@@ -9,7 +9,7 @@
 #include <signal.h>
 #define CHATDATA 1024
 #define IPADDR "127.0.0.1"
-#define PORT 9000
+#define PORT 9004
 
 void *do_send_chat(void *);
 void *do_receive_chat(void *);
@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
 	//
 	//
 	//pthread_create with do_send function
+	write(c_socket, nickname, strlen(nickname));
 	status = pthread_create(&thread_1, NULL, do_send_chat, (void *)&c_socket);
 	if(status) {
 		printf("[ERROR] thread_1 create fail. status = %d\n", status);
@@ -64,7 +65,7 @@ int main(int argc, char *argv[]) {
 	//join both threads
 	pthread_join(thread_1, NULL);
 	pthread_join(thread_2, NULL);
-	printf("main program end\n");
+
 	//
 	//
 	close(c_socket);
