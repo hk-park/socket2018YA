@@ -24,7 +24,6 @@ struct user {
 };
 
 struct user us[MAX_CLIENT];
-//int    list_c[MAX_CLIENT]; 접속한 클라이언트를 관리하는 배열
 char    escape[ ] = "exit";
 char    greeting[ ] = "Welcome to chatting room\n";
 char    CODE200[ ] = "Sorry No More Connection\n";
@@ -65,7 +64,6 @@ int main(int argc, char *argv[ ])
             close(c_socket);
         } else {
             write(c_socket, greeting, strlen(greeting));
-            //pthread_create with do_chat function.
             pthread_create(&thread, NULL, do_chat, (void*)&c_socket);
         }
     }
@@ -82,7 +80,6 @@ void *do_chat(void *arg)
     while(1) {
         memset(chatData, 0, sizeof(chatData));
         if((n = read(c_socket, chatData, sizeof(chatData))) > 0) {
-		//write chatData to all clients
 		strcpy(tempData, chatData);
 		msg = strstr(tempData, "/w");
 		
@@ -113,9 +110,6 @@ void *do_chat(void *arg)
 }
 
 int pushClient(int c_socket) {
-    //ADD c_socket to list_c array.
-    //return -1, if list_c is full.
-    //return the index of list_c which c_socket is added.
     int i, n;
     char cName[CHATDATA];
     memset(cName, 0, sizeof(cName));
@@ -138,7 +132,6 @@ int pushClient(int c_socket) {
 int popClient(int c_socket)
 {
     close(c_socket);
-    //REMOVE c_socket from list_c array.
     int i;
     for(i=0; i<MAX_CLIENT; i++) {
 	pthread_mutex_lock(&mutex);
