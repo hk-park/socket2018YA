@@ -43,8 +43,9 @@ int main(int argc, char *argv[ ])
     write(c_socket, nickname, strlen(nickname));
 	pthread_create(&thread_1, NULL, do_send_chat, (void*)&c_socket);
 	pthread_create(&thread_2, NULL, do_receive_chat, (void*)&c_socket);
-	pthread_join(thread_1, (void**)&status);
-	pthread_join(thread_1, (void**)&status);
+	pthread_join(thread_1, NULL);
+	pthread_join(thread_1, NULL);
+
     close(c_socket);
 }
 void * do_send_chat(void *arg)
